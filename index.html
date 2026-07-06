@@ -11,6 +11,8 @@
     .time { color:#999; font-size:0.8em; }
     textarea { width:100%; height:60px; }
     button { margin-top:5px; }
+    #status { font-weight: bold; }
+    #countdown { color: #0066cc; margin-left: 10px; }
     #error-detail { background:#ffe0e0; border:1px solid red; padding:10px; margin-top:10px; white-space:pre-wrap; display:none; }
   </style>
 </head>
@@ -19,7 +21,10 @@
   <div id="messages">加载中...</div>
   <textarea id="input" placeholder="说点什么（最多500字）" maxlength="500"></textarea><br>
   <button onclick="submit()">匿名提交</button>
-  <p id="status"></p>
+  <p>
+    <span id="status"></span>
+    <span id="countdown"></span>
+  </p>
   <div id="error-detail"></div>
 
   <script>
@@ -31,20 +36,15 @@
     const TOKEN = atob(P1 + P2);
     const REPO = 'LiveTF/love-wall';
     const PATH = 'msg.json';
+    let countdownTimer = null;   // 倒计时定时器
 
     async function load() {
       const msgsEl = document.getElementById('messages');
       const errBox = document.getElementById('error-detail');
       try {
-        // 使用 raw 直连保证实时，同时保留 Pages 相对路径作为降级
-        let url = `https://raw.githubusercontent.com/${REPO}/main/${PATH}?t=${Date.now()}`;
-        let res = await fetch(url);
-        if (!res.ok) {
-          // 降级为 Pages 相对路径
-          url = `${PATH}?t=${Date.now()}`;
-          res = await fetch(url);
-          if (!res.ok) throw new Error('加载失败');
-        }
+        // 从 Pages 加载，双重随机数防缓存
+        const res = await fetch(`${PATH}?t=${Date.now()}_${Math.random()}`);
+        if (!res.ok) throw new Error('加载失败');
         const data = await res.json();
         if (!Array.isArray(data)) throw new Error('数据格式错误');
         msgsEl.innerHTML = data.map(m =>
@@ -58,17 +58,38 @@
       }
     }
 
+    function startCountdown(seconds) {
+      const countdownEl = document.getElementById('countdown');
+      // 清除已有的倒计时
+      if (countdownTimer) clearInterval(countdownTimer);
+      let remaining = seconds;
+      countdownEl.innerText = `页面将在 ${remaining} 秒后自动刷新...`;
+      countdownTimer = setInterval(() => {
+        remaining--;
+        if (remaining <= 0) {
+          clearInterval(countdownTimer);
+          countdownTimer = null;
+          countdownEl.innerText = '正在刷新...';
+          // 强制刷新页面，绕过浏览器缓存
+          location.reload(true);
+        } else {
+          countdownEl.innerText = `页面将在 ${remaining} 秒后自动刷新...`;
+        }
+      }, 1000);
+    }
+
     async function submit() {
       const text = document.getElementById('input').value.trim();
       const status = document.getElementById('status');
       const errBox = document.getElementById('error-detail');
+      const countdownEl = document.getElementById('countdown');
       if (!text) return;
 
       status.innerText = '提交中...';
       errBox.style.display = 'none';
+      countdownEl.innerText = '';  // 清除旧倒计时
 
       try {
-        // 1. 读取当前文件
         const getRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${PATH}`, {
           headers: {
             'Authorization': `token ${TOKEN}`,
@@ -85,7 +106,6 @@
         let arr = [];
         try { arr = JSON.parse(atob(file.content)); } catch {}
 
-        // 2. 添加新留言（限制长度，防刷）
         arr.push({
           id: Date.now().toString(36) + Math.random().toString(36).slice(2,8),
           text: text.slice(0,500),
@@ -93,12 +113,11 @@
         });
         if (arr.length > 500) arr = arr.slice(-500);
 
-        // 3. 使用 UTF-8 安全的方式编码内容（解决中文乱码）
+        // UTF-8 安全编码
         const jsonStr = JSON.stringify(arr, null, 2);
         const utf8Bytes = new TextEncoder().encode(jsonStr);
         const content = btoa(String.fromCharCode(...utf8Bytes));
 
-        // 4. 更新文件
         const putRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${PATH}`, {
           method: 'PUT',
           headers: {
@@ -113,9 +132,10 @@
         });
 
         if (putRes.ok) {
-          status.innerText = '✅ 提交成功！立刻刷新可见。';
+          status.innerText = '✅ 提交成功！';
           document.getElementById('input').value = '';
-          await load();
+          // 启动 60 秒倒计时，自动刷新页面
+          startCountdown(60);
         } else if (putRes.status === 409) {
           status.innerText = '有人同时提交，再点一次';
         } else {
