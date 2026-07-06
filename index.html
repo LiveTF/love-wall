@@ -27,22 +27,17 @@
     </div>
 
 <script>
-// ==================== 只改这里3个值！====================
 const OWNER = "LiveTF";
 const REPO = "love-wall";
-// ======================================================
 
-// 页面加载读取所有表白
+// 修复403：直接读取Pages静态json，不调用github api
 async function loadWall() {
     try {
-        const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/msg.json`);
-        const file = await res.json();
-        // base64解码json
-        const raw = atob(file.content);
-        const msgList = JSON.parse(raw);
-        // 渲染页面
+        const res = await fetch(`https://LiveTF.github.io/love-wall/msg.json`, {cache: "no-cache"});
+        if (!res.ok) throw "文件读取失败";
+        const raw = await res.text();
+        const msgList = JSON.parse(raw.trim());
         let html = "";
-        // 倒序，最新留言放最上面
         msgList.reverse().forEach(item=>{
             html += `
                 <div class="msg-item">
@@ -53,6 +48,44 @@ async function loadWall() {
         })
         document.getElementById("wall").innerHTML = html;
     }catch(e){
+        console.error("加载错误详情：", e);
         document.getElementById("wall").innerText = "加载失败，请刷新页面";
     }
 }
+
+async function submitMsg() {
+    const text = document.getElementById("inputText").value.trim();
+    const tip = document.getElementById("tip");
+    if(!text){
+        tip.innerText = "请输入内容！";
+        return;
+    }
+    tip.innerText = "正在提交，等待几秒刷新...";
+    try {
+        await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/dispatches`,{
+            method:"POST",
+            headers:{
+                "Accept":"application/vnd.github+json",
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({
+                event_type:"wall_submit",
+                client_payload:{
+                    content:text
+                }
+            })
+        })
+        tip.innerText = "提交成功！3秒后刷新查看";
+        document.getElementById("inputText").value = "";
+        setTimeout(loadWall,3000);
+    }catch(err){
+        tip.innerText = "提交失败，稍后再试";
+        console.error(err);
+    }
+}
+
+window.onload = loadWall;
+setInterval(loadWall,10000);
+</script>
+</body>
+</html>
