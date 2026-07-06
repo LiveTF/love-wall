@@ -23,9 +23,9 @@
   <div id="error-detail"></div>
 
   <script>
-    // ========== 把下面两行替换成你拆分后的乱码 ==========
-    const P1 = 'Z2hwX00xRFFWTkdEWFZmYTFJQkty';   // 如：Z2hwX3NvbWU=
-    const P2 = 'OTZGdVlJRzlyQmx5czNxQXMzWQ==';   // 如：dG9rZW4xMjM0
+    // ========== 你的分段密钥（已填好，不要改） ==========
+    const P1 = 'Z2hwX00xRFFWTkdEWFZmYTFJQkty';   // 你生成的第一段
+    const P2 = 'OTZGdVlJRzlyQmx5czNxQXMzWQ==';   // 你生成的第二段
     // =================================================
     
     const TOKEN = atob(P1 + P2);   // 自动拼回真实 Token
@@ -34,7 +34,8 @@
 
     async function load() {
       try {
-        const res = await fetch(`msg.json?t=${Date.now()}`);
+        // 修改为直连 raw 地址，绕过 Pages 缓存，新留言立刻显示
+        const res = await fetch(`https://raw.githubusercontent.com/${REPO}/main/${PATH}?t=${Date.now()}`);
         if (!res.ok) throw new Error('加载失败');
         const data = await res.json();
         const msgs = document.getElementById('messages');
@@ -94,8 +95,10 @@
         });
 
         if (putRes.ok) {
-          status.innerText = '✅ 提交成功！约1分钟后可见。';
+          status.innerText = '✅ 提交成功！立刻刷新可见。';
           document.getElementById('input').value = '';
+          // 提交成功后立刻重新加载一次，同时保留原有 30 秒后的第二次刷新
+          load();
           setTimeout(load, 30000);
         } else if (putRes.status === 409) {
           status.innerText = '有人同时提交，再点一次';
