@@ -98,16 +98,19 @@
   </div>
 
   <script>
-    // ========== 你的分段密钥（保持不变） ==========
+    // ========== 配置（分段密钥，与之前相同） ==========
     const P1 = 'Z2hwX00xRFFWTkdEWFZmYTFJQkty';
     const P2 = 'OTZGdVlJRzlyQmx5czNxQXMzWQ==';
-    // ===========================================
     const TOKEN = atob(P1 + P2);
     const REPO = 'LiveTF/love-wall';
     const PATH = 'msg.json';
+    // 构造 raw 直连地址（绕开 Pages 缓存）
+    const RAW_URL = `https://raw.githubusercontent.com/${REPO}/main/${PATH}`;
+    // ===============================================
+
     let countdownInterval = null;
 
-    // ✅ 100% 可靠的 UTF-8 转 Base64（逐字节拼接，避免溢出）
+    // 稳健 UTF-8 转 Base64（新留言不会乱码）
     function utf8ToBase64(str) {
       const bytes = new TextEncoder().encode(str);
       let binary = '';
@@ -118,32 +121,51 @@
     }
 
     function clearCountdown() {
-      if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+      if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+      }
     }
 
     function startCountdown(seconds) {
       clearCountdown();
       const statusEl = document.getElementById('status');
       let remaining = seconds;
-      statusEl.innerText = `✅ 提交成功！页面将在 ${remaining} 秒后自动刷新...`;
+      statusEl.innerText = `✅ 提交成功！页面将在 ${remaining} 秒后自动刷新数据...`;
       countdownInterval = setInterval(() => {
         remaining--;
         if (remaining <= 0) {
           clearCountdown();
           statusEl.innerText = '正在刷新...';
-          location.reload(true);
+          load();  // 静默刷新数据，不再刷新整个页面
         } else {
-          statusEl.innerText = `✅ 提交成功！页面将在 ${remaining} 秒后自动刷新...`;
+          statusEl.innerText = `✅ 提交成功！页面将在 ${remaining} 秒后自动刷新数据...`;
         }
       }, 1000);
     }
 
+    // 加载留言（优化后：raw 优先，自动降级）
     async function load() {
       const msgsEl = document.getElementById('messages');
       try {
-        const res = await fetch(`${PATH}?t=${Date.now()}_${Math.random()}`);
-        if (!res.ok) throw new Error('加载失败');
-        const data = await res.json();
+        let data;
+        // 1. 优先尝试 raw 直连（实时数据，几秒内可见）
+        try {
+          const rawRes = await fetch(`${RAW_URL}?t=${Date.now()}_${Math.random().toString(36)}`);
+          if (rawRes.ok) {
+            data = await rawRes.json();
+          } else {
+            throw new Error('raw failed');
+          }
+        } catch (e) {
+          // 2. raw 失败，降级为 Pages 相对路径
+          const res = await fetch(`${PATH}?t=${Date.now()}_${Math.random().toString(36)}`);
+          if (!res.ok) throw new Error('Pages 加载失败');
+          data = await res.json();
+        }
+
+        if (!Array.isArray(data)) throw new Error('数据格式错误');
+
         msgsEl.innerHTML = data.map(m =>
           `<div class="msg"><div class="content">${escapeHtml(m.text||'')}</div><div class="time">${new Date(m.time).toLocaleString()}</div></div>`
         ).join('') || '<div style="text-align:center;color:#aaa;padding:30px;">✨ 还没有留言，快来写下第一条吧 ~</div>';
@@ -180,7 +202,7 @@
         if (arr.length > 500) arr = arr.slice(-500);
 
         const jsonStr = JSON.stringify(arr, null, 2);
-        const content = utf8ToBase64(jsonStr);   // ✅ 关键修复
+        const content = utf8ToBase64(jsonStr);
 
         const putRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${PATH}`, {
           method: 'PUT',
@@ -190,6 +212,9 @@
 
         if (putRes.ok) {
           document.getElementById('input').value = '';
+          // 立即拉取最新数据（通过 raw 直连，几乎马上就能看到）
+          await load();
+          // 启动倒计时，兜底刷新（如果 raw 暂时还没同步，60秒后再次 load）
           startCountdown(60);
         } else if (putRes.status === 409) {
           status.innerText = '⚠️ 有人同时提交，再点一次';
@@ -208,8 +233,9 @@
       return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
 
+    // 首次加载 + 每 10 秒自动刷新（加快同步）
     load();
-    setInterval(load, 30000);
+    setInterval(load, 10000);
   </script>
 </body>
 </html>
