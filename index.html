@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
+    /* ========== 全局样式 ========== */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Noto Sans SC', sans-serif;
@@ -26,9 +27,15 @@
       border-radius: 24px;
       box-shadow: 0 20px 40px rgba(0,0,0,0.08);
       padding: 30px 28px;
+      position: relative;
     }
-    h1 { text-align: center; font-weight: 500; color: #4a6fa5; margin-bottom: 20px; }
+    h1 { text-align: center; font-weight: 500; color: #4a6fa5; margin-bottom: 6px; user-select: none; }
     h1::before, h1::after { content: "💌"; font-size: 1.5rem; }
+    /* 管理员模式指示器 */
+    #admin-indicator {
+      text-align: center; font-size: 0.7rem; color: #e74c3c; font-weight: bold; display: none; margin-bottom: 10px;
+    }
+    /* 留言列表容器 */
     #messages {
       background: #fff;
       border-radius: 16px;
@@ -40,6 +47,7 @@
     }
     #messages::-webkit-scrollbar { width: 6px; }
     #messages::-webkit-scrollbar-thumb { background: #d4dce6; border-radius: 10px; }
+    /* 单条留言卡片 */
     .msg {
       padding: 12px 14px;
       margin-bottom: 10px;
@@ -56,8 +64,9 @@
     .msg-content { flex: 1; color: #2c3e50; line-height: 1.6; word-break: break-word; cursor: pointer; }
     .msg-content:hover { color: #1a2b4c; }
     .msg-time { font-size: 0.7rem; color: #95a5a6; white-space: nowrap; }
+    /* 点赞/点踩/回复/删除 操作栏 */
     .msg-stats {
-      display: flex; gap: 16px; font-size: 0.8rem; color: #5a6b7c; margin-top: 4px; align-items: center;
+      display: flex; gap: 12px; font-size: 0.8rem; color: #5a6b7c; margin-top: 4px; align-items: center;
     }
     .msg-stats span {
       cursor: pointer; user-select: none; display: inline-flex; align-items: center; gap: 4px; transition: 0.2s;
@@ -67,16 +76,25 @@
     .reply-toggle:hover { color: #2ecc71; }
     .active-like { color: #e74c3c; font-weight: bold; }
     .active-dislike { color: #3498db; font-weight: bold; }
+    .delete-btn {
+      color: #c92a2a; font-weight: bold; cursor: pointer; margin-left: 8px; display: none;
+    }
+    .delete-btn.show { display: inline-flex; }
+    /* 回复区域 */
+    .reply-item {
+      padding: 8px 10px; margin-bottom: 6px; background: #fff; border-radius: 8px; font-size: 0.85rem;
+      color: #2c3e50; display: flex; justify-content: space-between; align-items: center;
+    }
+    .reply-text { flex: 1; word-break: break-word; }
+    .reply-time { font-size: 0.7rem; color: #aaa; margin-left: 10px; white-space: nowrap; }
+    .reply-del {
+      cursor: pointer; color: #c92a2a; margin-left: 8px; font-weight: bold; display: none;
+    }
+    .reply-del.show { display: inline-block; }
     .reply-section {
       margin-top: 10px; padding-top: 10px; border-top: 1px dashed #d0d7e6; display: none; animation: fadeIn 0.2s;
     }
     .reply-section.open { display: block; }
-    .reply-item {
-      padding: 8px 10px; margin-bottom: 6px; background: #fff; border-radius: 8px; font-size: 0.85rem;
-      color: #2c3e50; display: flex; justify-content: space-between;
-    }
-    .reply-text { flex: 1; word-break: break-word; }
-    .reply-time { font-size: 0.7rem; color: #aaa; margin-left: 10px; white-space: nowrap; }
     .reply-input-wrap { display: flex; gap: 6px; margin-top: 8px; }
     .reply-input {
       flex: 1; padding: 8px 10px; border: 2px solid #e0e7f0; border-radius: 10px; font-size: 0.85rem;
@@ -88,6 +106,7 @@
       cursor: pointer; font-weight: 500; font-size: 0.85rem; white-space: nowrap;
     }
     .reply-submit:hover { background: #5d8ac8; }
+    /* 发布新留言区域 */
     textarea#input {
       width: 100%; height: 70px; padding: 14px 16px; border: 2px solid #e0e7f0;
       border-radius: 16px; resize: none; outline: none; font-family: inherit;
@@ -101,70 +120,281 @@
     #status { margin-top: 10px; color: #4a6fa5; text-align: center; min-height: 22px; }
     #error-detail { background: #fff0f0; color: #c92a2a; padding: 12px; margin-top: 12px; border-radius: 12px; display: none; white-space: pre-wrap; }
     .empty-msg { text-align: center; color: #aaa; padding: 30px; }
-    #retry-btn {
-      display: inline-block; margin-top: 8px; padding: 6px 18px; background: #7aa2d6; color: #fff; border: none;
-      border-radius: 8px; cursor: pointer; font-size: 0.85rem;
+    /* 管理员弹窗 */
+    #admin-modal {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center;
     }
+    #admin-modal.show { display: flex; }
+    .admin-box {
+      background: #fff; border-radius: 20px; padding: 24px; width: 320px; box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+    .admin-box h3 { margin-bottom: 16px; color: #4a6fa5; text-align: center; }
+    .admin-box input {
+      width: 100%; padding: 10px; margin-bottom: 12px; border: 2px solid #e0e7f0; border-radius: 10px; outline: none;
+    }
+    .admin-box input:focus { border-color: #7aa2d6; }
+    .admin-box button {
+      width: 100%; padding: 10px; background: #7aa2d6; color: #fff; border: none; border-radius: 10px; cursor: pointer; margin-bottom: 8px;
+    }
+    .admin-box button:hover { background: #5d8ac8; }
+    .admin-box .admin-link {
+      text-align: center; font-size: 0.8rem; color: #7aa2d6; cursor: pointer; margin-top: 4px;
+    }
+    .admin-box .hidden { display: none; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>匿名表白墙</h1>
+    <!-- 标题：连续点击5次可唤醒管理员面板 -->
+    <h1 id="main-title">匿名表白墙</h1>
+    <!-- 管理员登录成功后显示 -->
+    <div id="admin-indicator">🔑 管理员模式</div>
+    <!-- 留言列表区 -->
     <div id="messages">加载中...</div>
+    <!-- 发布新留言输入区 -->
     <textarea id="input" placeholder="写下你想说的话（支持所有语言、emoji）..." maxlength="500"></textarea>
     <button id="submit-btn">🌿 匿名提交</button>
+    <!-- 状态提示与错误详情 -->
     <p id="status"></p>
     <div id="error-detail"></div>
   </div>
 
+  <!-- 管理员弹窗（登录/修改凭据） -->
+  <div id="admin-modal">
+    <div class="admin-box">
+      <h3 id="admin-modal-title">管理员登录</h3>
+      <input type="text" id="admin-username" placeholder="用户名" />
+      <input type="password" id="admin-password" placeholder="密码" />
+      <!-- 以下三个字段在“修改凭据”模式下才显示 -->
+      <input type="password" id="admin-old-password" class="hidden" placeholder="当前密码" />
+      <input type="text" id="admin-new-username" class="hidden" placeholder="新用户名" />
+      <input type="password" id="admin-new-password" class="hidden" placeholder="新密码" />
+      <button id="admin-action-btn">登录</button>
+      <div class="admin-link" id="admin-logout" style="display:none;">退出登录</div>
+      <div class="admin-link" id="admin-close-modal">取消</div>
+    </div>
+  </div>
+
   <script>
-    // ==================== 配置与 Token ====================
+    // ==================== 1. 配置与 GitHub Token ====================
+    // 你提供的分段 Base64 Token，拼接后即为 GitHub PAT（注意安全，请勿公开分享）
     const P1 = 'Z2hwX00xRFFWTkdEWFZmYTFJQkty';
     const P2 = 'OTZGdVlJRzlyQmx5czNxQXMzWQ==';
     const TOKEN = atob(P1 + P2);
+    // 仓库信息
     const CONFIG = {
-      owner: 'LiveTF',
-      repo: 'love-wall',
-      branch: 'main',
-      dataPath: 'msg.json',
+      owner: 'LiveTF',          // GitHub 用户名
+      repo: 'love-wall',        // 仓库名
+      branch: 'main',           // 分支
+      dataPath: 'msg.json',     // 数据文件路径
+      // 动态生成 raw 文件直链（绕过缓存）
       get rawUrl() { return `https://raw.githubusercontent.com/${this.owner}/${this.repo}/${this.branch}/${this.dataPath}?t=${Date.now()}_${Math.random().toString(36)}`; },
+      // 动态生成 API 地址
       get apiUrl() { return `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${this.dataPath}`; }
     };
 
-    // ==================== 工具函数 ====================
+    // ==================== 2. 工具函数 ====================
+    // UTF-8 安全编码为 Base64（支持所有语言和 emoji）
     function encodeUTF8(str) {
       const bytes = new TextEncoder().encode(str);
       let binary = '';
       for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
       return btoa(binary);
     }
+    // 解码 Base64 为原始字符串
     function decodeUTF8(base64) {
       const binary = atob(base64);
       const bytes = new Uint8Array(binary.length);
       for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
       return new TextDecoder().decode(bytes);
     }
+    // HTML 转义，防止 XSS
     function escapeHtml(s) {
       return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
+    // 格式化时间戳为本地可读字符串
     function formatTime(ts) {
       return new Date(ts).toLocaleString();
     }
-    // 深拷贝数据（用于保存快照）
+    // 深拷贝数据对象（用于保存快照）
     function cloneData(data) {
       return JSON.parse(JSON.stringify(data));
     }
 
-    // ==================== 数据存储 ====================
-    const MAX_MESSAGES = 500;
-    let _data = [];
-    let _isSaving = false;
-    let _pendingSaves = [];
+    // ==================== 3. 管理员功能 ====================
+    let isAdmin = false;                    // 当前是否处于管理员模式
+    const ADMIN_STORAGE_KEY = 'lovewall_admin';   // localStorage 键名
+    const SECRET = 'lovewall_secret_xor';   // XOR 加密密钥（仅简单混淆）
+    // 对字符串进行简单 XOR 加密，返回 Base64
+    function encrypt(text) {
+      return btoa(text.split('').map((c,i) => String.fromCharCode(c.charCodeAt(0) ^ SECRET.charCodeAt(i % SECRET.length))).join(''));
+    }
+    // 解密
+    function decrypt(enc) {
+      const binary = atob(enc);
+      let result = '';
+      for (let i = 0; i < binary.length; i++) {
+        result += String.fromCharCode(binary.charCodeAt(i) ^ SECRET.charCodeAt(i % SECRET.length));
+      }
+      return result;
+    }
 
-    // 本地点赞记录
+    // 初始化默认管理员账户（仅当本地无存储时生效）
+    function initDefaultAdmin() {
+      if (!localStorage.getItem(ADMIN_STORAGE_KEY)) {
+        const defaultCred = { username: 'admin', password: encrypt('admin123') };
+        localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(defaultCred));
+      }
+    }
+    initDefaultAdmin();
+
+    // 获取存储的管理员凭据（解密后返回）
+    function getAdminCred() {
+      const raw = localStorage.getItem(ADMIN_STORAGE_KEY);
+      if (!raw) return null;
+      try {
+        const cred = JSON.parse(raw);
+        return { username: cred.username, password: decrypt(cred.password) };
+      } catch (e) { return null; }
+    }
+    // 保存管理员凭据（加密存储）
+    function saveAdminCred(username, password) {
+      const cred = { username: username, password: encrypt(password) };
+      localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(cred));
+    }
+
+    // 显示管理员弹窗，mode 可选 'login' 或 'change'
+    function showAdminModal(mode = 'login') {
+      const modal = document.getElementById('admin-modal');
+      modal.classList.add('show');
+      // 清空所有输入框
+      document.getElementById('admin-username').value = '';
+      document.getElementById('admin-password').value = '';
+      document.getElementById('admin-old-password').value = '';
+      document.getElementById('admin-new-username').value = '';
+      document.getElementById('admin-new-password').value = '';
+
+      const oldPwdInput = document.getElementById('admin-old-password');
+      const newUserInput = document.getElementById('admin-new-username');
+      const newPwdInput = document.getElementById('admin-new-password');
+      const usernameInput = document.getElementById('admin-username');
+      const passwordInput = document.getElementById('admin-password');
+      const title = document.getElementById('admin-modal-title');
+      const actionBtn = document.getElementById('admin-action-btn');
+      const logoutBtn = document.getElementById('admin-logout');
+
+      if (mode === 'login') {
+        title.innerText = '管理员登录';
+        actionBtn.innerText = '登录';
+        usernameInput.classList.remove('hidden');
+        passwordInput.classList.remove('hidden');
+        oldPwdInput.classList.add('hidden');
+        newUserInput.classList.add('hidden');
+        newPwdInput.classList.add('hidden');
+        logoutBtn.style.display = 'none';
+      } else if (mode === 'change') {
+        title.innerText = '修改管理员凭据';
+        actionBtn.innerText = '修改';
+        usernameInput.classList.add('hidden');
+        passwordInput.classList.add('hidden');
+        oldPwdInput.classList.remove('hidden');
+        newUserInput.classList.remove('hidden');
+        newPwdInput.classList.remove('hidden');
+        logoutBtn.style.display = 'block';
+      }
+    }
+
+    function hideAdminModal() {
+      document.getElementById('admin-modal').classList.remove('show');
+    }
+
+    // 处理管理员弹窗的登录/修改操作
+    async function handleAdminAction() {
+      const mode = document.getElementById('admin-modal-title').innerText;
+      if (mode.includes('登录')) {
+        const username = document.getElementById('admin-username').value.trim();
+        const password = document.getElementById('admin-password').value.trim();
+        if (!username || !password) return alert('用户名和密码不能为空');
+        const cred = getAdminCred();
+        if (!cred) return alert('系统错误，无管理员账户');
+        if (cred.username === username && cred.password === password) {
+          isAdmin = true;
+          document.getElementById('admin-indicator').style.display = 'block';
+          renderMessages();   // 重新渲染以显示删除按钮
+          hideAdminModal();
+          setStatus('✅ 管理员登录成功');
+        } else {
+          alert('用户名或密码错误');
+        }
+      } else if (mode.includes('修改')) {
+        const oldPwd = document.getElementById('admin-old-password').value.trim();
+        const newUser = document.getElementById('admin-new-username').value.trim();
+        const newPwd = document.getElementById('admin-new-password').value.trim();
+        if (!oldPwd || !newUser || !newPwd) return alert('所有字段不能为空');
+        const cred = getAdminCred();
+        if (!cred) return alert('系统错误');
+        if (cred.password !== oldPwd) return alert('当前密码错误');
+        saveAdminCred(newUser, newPwd);
+        alert('凭据已更新，请使用新账号重新登录');
+        isAdmin = false;
+        document.getElementById('admin-indicator').style.display = 'none';
+        renderMessages();
+        hideAdminModal();
+      }
+    }
+
+    function logoutAdmin() {
+      isAdmin = false;
+      document.getElementById('admin-indicator').style.display = 'none';
+      renderMessages();
+      hideAdminModal();
+      setStatus('已退出管理员模式');
+    }
+
+    // 管理员删除整条留言
+    async function deleteMessage(msgId) {
+      if (!confirm('确定要删除这条留言吗？此操作不可恢复。')) return;
+      _data = _data.filter(m => m.id !== msgId);
+      const snapshot = cloneData(_data);
+      try {
+        await saveData(snapshot);
+        renderMessages();
+        setStatus('✅ 留言已删除');
+      } catch (e) {
+        setStatus('❌ 删除失败：' + e.message, true);
+        await refresh();  // 失败时回滚界面
+      }
+    }
+
+    // 管理员删除某条留言下的单条回复
+    async function deleteReply(msgId, replyId) {
+      if (!confirm('确定要删除这条回复吗？')) return;
+      const msg = _data.find(m => m.id === msgId);
+      if (!msg) return;
+      msg.replies = msg.replies.filter(r => r.id !== replyId);
+      const snapshot = cloneData(_data);
+      try {
+        await saveData(snapshot);
+        renderMessages();
+        setStatus('✅ 回复已删除');
+      } catch (e) {
+        setStatus('❌ 删除失败：' + e.message, true);
+        await refresh();
+      }
+    }
+
+    // ==================== 4. 数据存储层 ====================
+    const MAX_MESSAGES = 500;             // 最多存储留言条数，防止文件过大
+    let _data = [];                       // 内存中的留言数组
+    let _isSaving = false;               // 是否正在执行保存操作
+    let _pendingSaves = [];              // 排队中的保存任务
+
+    // 本地点赞记录（防止同一用户重复点赞/点踩）
     const voteRecord = JSON.parse(localStorage.getItem('lv_votes') || '{}');
     function saveVoteRecord() { localStorage.setItem('lv_votes', JSON.stringify(voteRecord)); }
 
+    // 通过 GitHub API 读取数据（需要 Token）
     async function loadFromAPI() {
       const res = await fetch(CONFIG.apiUrl, {
         headers: { 'Authorization': `Bearer ${TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
@@ -173,17 +403,18 @@
       const json = await res.json();
       return JSON.parse(decodeUTF8(json.content.replace(/\n/g, '')));
     }
+    // 通过 raw 直连读取数据（无需 Token，仅公开仓库可用）
     async function loadFromRaw() {
       const res = await fetch(CONFIG.rawUrl, { cache: 'no-cache' });
       if (!res.ok) throw new Error(`Raw 读取失败 (${res.status})`);
       return await res.json();
     }
 
+    // 加载数据：优先 API，失败则降级到 raw，并自动补齐缺失字段
     async function loadData() {
       try { _data = await loadFromAPI(); }
       catch (e) { console.warn('降级 raw:', e.message); _data = await loadFromRaw(); }
-      // 数据校验与字段补齐
-      if (!Array.isArray(_data)) _data = [];
+      if (!Array.isArray(_data)) _data = [];   // 数据校验
       _data.forEach(msg => {
         msg.likes = msg.likes || 0;
         msg.dislikes = msg.dislikes || 0;
@@ -192,9 +423,10 @@
       return _data;
     }
 
-    // 保存数据（使用传入的快照，防止竞态条件）
+    // 保存数据到 GitHub（使用传入的快照，避免竞态条件）
     async function saveData(dataToSave) {
       return new Promise((resolve, reject) => {
+        // 如果正在保存，加入队列等待
         if (_isSaving) {
           _pendingSaves.push({ data: dataToSave, resolve, reject });
           return;
@@ -203,6 +435,7 @@
 
         const saveProcess = async (data) => {
           try {
+            // 1. 获取最新 SHA（防止覆盖他人修改）
             const getRes = await fetch(CONFIG.apiUrl, {
               headers: { 'Authorization': `Bearer ${TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
             });
@@ -210,9 +443,9 @@
             const fileInfo = await getRes.json();
             const sha = fileInfo.sha;
 
+            // 2. 编码并提交
             const jsonStr = JSON.stringify(data, null, 2);
             const contentBase64 = encodeUTF8(jsonStr);
-
             const putRes = await fetch(CONFIG.apiUrl, {
               method: 'PUT',
               headers: {
@@ -229,15 +462,13 @@
             });
             if (!putRes.ok) throw new Error(`保存失败 (${putRes.status})`);
 
-            // 成功：结束当前保存，处理队列
             _isSaving = false;
             resolve();
-            processNextSave();
+            processNextSave();  // 处理下一个排队任务
           } catch (err) {
-            // 失败：也需继续处理队列（防止死锁）
             _isSaving = false;
             reject(err);
-            processNextSave();
+            processNextSave();  // 即使失败也要继续处理队列，防止死锁
           }
         };
 
@@ -253,22 +484,23 @@
       });
     }
 
-    // ==================== 视图渲染（保留展开状态和滚动位置） ====================
+    // ==================== 5. 视图渲染 ====================
     function renderMessages() {
       const container = document.getElementById('messages');
-      // 记录当前展开的评论区
+      // 记录当前已展开的评论区，渲染后恢复
       const openIds = [];
       container.querySelectorAll('.reply-section.open').forEach(section => {
         const id = section.id.replace('replies-', '');
         openIds.push(id);
       });
-      const scrollTop = container.scrollTop;
+      const scrollTop = container.scrollTop;  // 记录滚动位置
 
       if (!_data.length) {
         container.innerHTML = '<div class="empty-msg">✨ 还没有留言，快来写下第一条吧 ~</div>';
         return;
       }
 
+      // 构建留言列表 HTML
       container.innerHTML = _data.map(msg => {
         const replyCount = msg.replies.length;
         const userVote = voteRecord[msg.id] || '';
@@ -282,12 +514,16 @@
               <span class="like-btn ${userVote==='like'?'active-like':''}" data-action="vote" data-id="${msg.id}" data-type="like">👍 ${msg.likes}</span>
               <span class="dislike-btn ${userVote==='dislike'?'active-dislike':''}" data-action="vote" data-id="${msg.id}" data-type="dislike">👎 ${msg.dislikes}</span>
               <span class="reply-toggle" data-action="toggle-reply" data-id="${msg.id}">💬 ${replyCount}</span>
+              <!-- 删除按钮仅在管理员模式下显示 -->
+              <span class="delete-btn ${isAdmin ? 'show' : ''}" data-action="delete-msg" data-id="${msg.id}">🗑️ 删除</span>
             </div>
             <div class="reply-section" id="replies-${msg.id}">
               ${msg.replies.map(r => `
                 <div class="reply-item">
                   <div class="reply-text">${escapeHtml(r.text)}</div>
                   <div class="reply-time">${formatTime(r.time)}</div>
+                  <!-- 回复删除按钮同样仅管理员可见 -->
+                  <span class="reply-del ${isAdmin ? 'show' : ''}" data-action="delete-reply" data-msgid="${msg.id}" data-replyid="${r.id}">❌</span>
                 </div>
               `).join('')}
               <div class="reply-input-wrap">
@@ -304,16 +540,16 @@
         const section = document.getElementById(`replies-${id}`);
         if (section) section.classList.add('open');
       });
-      // 恢复滚动位置
-      container.scrollTop = scrollTop;
+      container.scrollTop = scrollTop;  // 恢复滚动位置
     }
 
-    // ==================== 应用逻辑 ====================
+    // ==================== 6. 核心业务逻辑 ====================
     const statusEl = document.getElementById('status');
     const errorBox = document.getElementById('error-detail');
     let countdownTimer = null;
-    let retryCount = 0; // 用于自动重试
+    let retryCount = 0;
 
+    // 设置状态提示
     function setStatus(text, isError = false) {
       statusEl.innerText = text;
       if (isError) {
@@ -324,6 +560,7 @@
       }
     }
 
+    // 操作成功后启动倒计时，结束后静默刷新
     function startCountdown(seconds) {
       clearInterval(countdownTimer);
       let remaining = seconds;
@@ -340,6 +577,7 @@
       }, 1000);
     }
 
+    // 刷新数据并重新渲染
     async function refresh() {
       try {
         retryCount = 0;
@@ -347,7 +585,7 @@
         renderMessages();
         setStatus('');
       } catch (e) {
-        if (retryCount < 1) { // 自动重试一次
+        if (retryCount < 1) {   // 自动重试一次
           retryCount++;
           setTimeout(refresh, 2000);
         } else {
@@ -356,17 +594,19 @@
       }
     }
 
-    // 投票处理（乐观更新 + 快照保存）
+    // 处理点赞/点踩（乐观更新）
     async function handleVote(msgId, type) {
       const msg = _data.find(m => m.id === msgId);
       if (!msg) return;
 
       const current = voteRecord[msgId];
       if (current === type) {
+        // 取消之前的相同投票
         delete voteRecord[msgId];
         if (type === 'like') msg.likes = Math.max(0, msg.likes - 1);
         else msg.dislikes = Math.max(0, msg.dislikes - 1);
       } else {
+        // 先撤销相反的投票
         if (current) {
           if (current === 'like') msg.likes = Math.max(0, msg.likes - 1);
           else msg.dislikes = Math.max(0, msg.dislikes - 1);
@@ -377,22 +617,19 @@
         else msg.dislikes += 1;
       }
       saveVoteRecord();
-
-      // 立即更新界面
       renderMessages();
 
-      // 保存快照
       const snapshot = cloneData(_data);
       try {
         await saveData(snapshot);
         setStatus('✅ 投票已更新');
       } catch (e) {
         setStatus('❌ 投票失败：' + e.message, true);
-        await refresh(); // 回滚到服务器状态
+        await refresh();  // 失败则回滚
       }
     }
 
-    // 提交回复（乐观更新 + 快照保存）
+    // 提交新回复
     async function submitReply(msgId) {
       const input = document.getElementById(`reply-input-${msgId}`);
       if (!input) return;
@@ -401,18 +638,13 @@
 
       const msg = _data.find(m => m.id === msgId);
       if (!msg) return;
-
-      // 添加回复
       msg.replies.push({
         id: Date.now().toString(36) + Math.random().toString(36).slice(2,8),
         text: text.slice(0,300),
         time: new Date().toISOString()
       });
       input.value = '';
-
-      // 立即渲染
       renderMessages();
-      // 自动展开评论区
       document.getElementById(`replies-${msgId}`)?.classList.add('open');
 
       const snapshot = cloneData(_data);
@@ -425,7 +657,7 @@
       }
     }
 
-    // 新留言
+    // 发布新留言
     async function handleNewPost(text) {
       if (!_data) await loadData();
       const newMsg = {
@@ -437,8 +669,7 @@
         replies: []
       };
       _data.push(newMsg);
-      if (_data.length > MAX_MESSAGES) _data = _data.slice(-MAX_MESSAGES);
-
+      if (_data.length > MAX_MESSAGES) _data = _data.slice(-MAX_MESSAGES);  // 保留最新500条
       renderMessages();
       document.getElementById('input').value = '';
 
@@ -452,7 +683,8 @@
       }
     }
 
-    // ==================== 事件绑定 ====================
+    // ==================== 7. 事件绑定 ====================
+    // 发布按钮
     document.getElementById('submit-btn').addEventListener('click', () => {
       const text = document.getElementById('input').value.trim();
       if (!text) return;
@@ -460,27 +692,33 @@
       handleNewPost(text);
     });
 
-    // 事件委托：点击与键盘
+    // 使用事件委托处理留言列表中的所有交互
     document.getElementById('messages').addEventListener('click', (e) => {
       const target = e.target.closest('[data-action]');
       if (!target) return;
       const action = target.dataset.action;
       const msgId = target.dataset.id;
+      const replyId = target.dataset.replyid;
 
       if (action === 'toggle-reply') {
         const section = document.getElementById(`replies-${msgId}`);
         if (section) section.classList.toggle('open');
       }
       else if (action === 'vote') {
-        const type = target.dataset.type;
-        handleVote(msgId, type);
+        handleVote(msgId, target.dataset.type);
       }
       else if (action === 'submit-reply') {
         submitReply(msgId);
       }
+      else if (action === 'delete-msg') {
+        deleteMessage(msgId);
+      }
+      else if (action === 'delete-reply') {
+        deleteReply(msgId, replyId);
+      }
     });
 
-    // 支持回复输入框回车提交
+    // 回复输入框支持回车提交
     document.getElementById('messages').addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         const target = e.target.closest('.reply-input');
@@ -492,7 +730,7 @@
       }
     });
 
-    // 主输入框回车提交
+    // 主输入框支持回车提交
     document.getElementById('input').addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -500,10 +738,41 @@
       }
     });
 
-    // 首次加载
-    refresh();
-    // 每30秒自动刷新
-    setInterval(refresh, 30000);
+    // ---------- 管理员入口：连续点击标题5次 ----------
+    let clickCount = 0;
+    let clickTimer = null;
+    document.getElementById('main-title').addEventListener('click', () => {
+      clickCount++;
+      if (clickCount >= 5) {
+        clearTimeout(clickTimer);
+        clickCount = 0;
+        if (isAdmin) {
+          showAdminModal('change');   // 已登录则显示修改凭据界面
+        } else {
+          showAdminModal('login');    // 否则显示登录界面
+        }
+      } else {
+        if (clickTimer) clearTimeout(clickTimer);
+        clickTimer = setTimeout(() => { clickCount = 0; }, 2000);  // 2秒内未点满5次重置计数
+      }
+    });
+
+    // 管理弹窗事件
+    document.getElementById('admin-action-btn').addEventListener('click', handleAdminAction);
+    document.getElementById('admin-close-modal').addEventListener('click', hideAdminModal);
+    document.getElementById('admin-logout').addEventListener('click', logoutAdmin);
+
+    // 管理弹窗内回车提交
+    document.getElementById('admin-password').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') handleAdminAction();
+    });
+    document.getElementById('admin-new-password').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') handleAdminAction();
+    });
+
+    // ==================== 8. 启动应用 ====================
+    refresh();                        // 首次加载数据
+    setInterval(refresh, 30000);      // 每30秒自动刷新
   </script>
 </body>
 </html>
