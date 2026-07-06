@@ -5,6 +5,12 @@
     "time": "2026-07-06T09:02:55.699Z",
     "likes": 0,
     "dislikes": 0,
-    "replies": []
+    "replies": [
+      {
+        "id": "mr8zssc69einyg",
+        "text": "123",
+        "time": "2026-07-06T09:03:12.246Z"
+      }
+    ]
   }
 ]
