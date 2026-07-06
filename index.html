@@ -72,7 +72,6 @@
     .active-like { color: #e74c3c; font-weight: bold; }
     .active-dislike { color: #3498db; font-weight: bold; }
 
-    /* 删除按钮默认隐藏，通过 .show 控制 */
     .msg-stats .delete-btn {
       color: #c92a2a; font-weight: bold; cursor: pointer; margin-left: 8px;
       display: none;
@@ -171,7 +170,7 @@
   </div>
 
   <script>
-    // ==================== 配置与 Token ====================
+    // ==================== 1. 配置与 Token ====================
     const P1 = 'Z2hwX00xRFFWTkdEWFZmYTFJQkty';
     const P2 = 'OTZGdVlJRzlyQmx5czNxQXMzWQ==';
     const TOKEN = atob(P1 + P2);
@@ -184,7 +183,7 @@
       get apiUrl() { return `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${this.dataPath}`; }
     };
 
-    // ==================== 工具函数 ====================
+    // ==================== 2. 工具函数 ====================
     function encodeUTF8(str) {
       const bytes = new TextEncoder().encode(str);
       let binary = '';
@@ -207,7 +206,7 @@
       return JSON.parse(JSON.stringify(data));
     }
 
-    // ==================== 管理员加密与仓库持久化 ====================
+    // ==================== 3. 管理员功能（持久化到仓库） ====================
     let isAdmin = false;
     const SECRET = 'lovewall_secret_xor';
     function encrypt(text) {
@@ -222,7 +221,7 @@
       return result;
     }
 
-    // 从仓库数据中读取管理员凭据
+    // 从 _data 对象中读取管理员凭据
     function getAdminCred() {
       if (!_data || !_data._admin) return null;
       try {
@@ -234,7 +233,7 @@
       } catch (e) { return null; }
     }
 
-    // 将管理员凭据写入 _data._admin（加密）
+    // 将凭据写入 _data._admin
     function setAdminCred(username, password) {
       _data._admin = {
         u: encrypt(username),
@@ -242,15 +241,14 @@
       };
     }
 
-    // 初始化默认管理员（如果仓库中还没有 _admin 字段）
+    // 如果仓库中没有 _admin 字段，初始化默认管理员
     function ensureDefaultAdmin() {
       if (!_data._admin) {
         setAdminCred('admin', 'admin123');
-        console.log('已初始化默认管理员账户');
       }
     }
 
-    // ==================== 管理员弹窗 ====================
+    // 显示/隐藏管理弹窗
     function showAdminModal(mode = 'login') {
       const modal = document.getElementById('admin-modal');
       modal.classList.add('show');
@@ -301,7 +299,7 @@
         const password = document.getElementById('admin-password').value.trim();
         if (!username || !password) return alert('用户名和密码不能为空');
         const cred = getAdminCred();
-        if (!cred) return alert('系统中还没有管理员账户，请先刷新页面初始化');
+        if (!cred) return alert('系统中还没有管理员账户，请刷新页面初始化');
         if (cred.username === username && cred.password === password) {
           isAdmin = true;
           document.getElementById('admin-indicator').style.display = 'block';
@@ -320,7 +318,7 @@
         if (!cred) return alert('系统错误');
         if (cred.password !== oldPwd) return alert('当前密码错误');
         
-        // 更新仓库中的管理员凭据
+        // 更新并保存到仓库
         setAdminCred(newUser, newPwd);
         const snapshot = cloneData(_data);
         try {
@@ -331,7 +329,7 @@
           renderMessages();
           hideAdminModal();
         } catch (e) {
-          alert('保存失败，请重试');
+          alert('保存失败：' + e.message);
         }
       }
     }
@@ -344,10 +342,10 @@
       setStatus('已退出管理员模式');
     }
 
-    // 删除操作
+    // 删除操作（已使用 _data.messages）
     async function deleteMessage(msgId) {
       if (!confirm('确定要删除这条留言吗？此操作不可恢复。')) return;
-      _data = _data.filter(m => m.id !== msgId);
+      _data.messages = _data.messages.filter(m => m.id !== msgId);
       const snapshot = cloneData(_data);
       try {
         await saveData(snapshot);
@@ -361,7 +359,7 @@
 
     async function deleteReply(msgId, replyId) {
       if (!confirm('确定要删除这条回复吗？')) return;
-      const msg = _data.find(m => m.id === msgId);
+      const msg = _data.messages.find(m => m.id === msgId);
       if (!msg) return;
       msg.replies = msg.replies.filter(r => r.id !== replyId);
       const snapshot = cloneData(_data);
@@ -375,15 +373,13 @@
       }
     }
 
-    // ==================== 数据存储层 ====================
+    // ==================== 4. 数据存储层 ====================
     const MAX_MESSAGES = 500;
-    let _data = [];               // 注意：_data 实际上是一个对象 { _admin: {...}, messages: [...] }，但我们维持为数组以兼容旧数据？不，为了管理方便，我们把 _data 定义为对象，里面包含 messages 数组。需要重构。
-    // 重构：_data 格式 { _admin: {u, p}, messages: [...] }
-    // 为了兼容旧数据（纯数组），在 loadData 中转换。
-    
+    let _data = { messages: [], _admin: null };   // 统一数据结构
     let _isSaving = false;
     let _pendingSaves = [];
 
+    // 本地点赞记录（仍使用 localStorage，不影响跨设备）
     const voteRecord = JSON.parse(localStorage.getItem('lv_votes') || '{}');
     function saveVoteRecord() { localStorage.setItem('lv_votes', JSON.stringify(voteRecord)); }
 
@@ -405,8 +401,8 @@
       let raw;
       try { raw = await loadFromAPI(); }
       catch (e) { console.warn('降级 raw:', e.message); raw = await loadFromRaw(); }
-      
-      // 兼容处理：如果读取到的是数组（旧格式），转换为对象格式
+
+      // 兼容旧格式：如果是数组，转换为对象格式
       if (Array.isArray(raw)) {
         _data = { messages: raw, _admin: null };
       } else if (raw && typeof raw === 'object') {
@@ -416,10 +412,10 @@
       } else {
         _data = { messages: [], _admin: null };
       }
-      
-      // 确保管理员存在
+
+      // 确保管理员账户存在
       ensureDefaultAdmin();
-      
+
       // 补齐留言字段
       _data.messages.forEach(msg => {
         msg.likes = msg.likes || 0;
@@ -487,7 +483,7 @@
       });
     }
 
-    // ==================== 视图渲染（过滤掉 _admin） ====================
+    // ==================== 5. 视图渲染（只渲染 messages 数组） ====================
     function renderMessages() {
       const container = document.getElementById('messages');
       const openIds = [];
@@ -543,7 +539,7 @@
       container.scrollTop = scrollTop;
     }
 
-    // ==================== 核心业务逻辑 ====================
+    // ==================== 6. 核心业务逻辑 ====================
     const statusEl = document.getElementById('status');
     const errorBox = document.getElementById('error-detail');
     let countdownTimer = null;
@@ -661,7 +657,9 @@
         replies: []
       };
       _data.messages.push(newMsg);
-      if (_data.messages.length > MAX_MESSAGES) _data.messages = _data.messages.slice(-MAX_MESSAGES);
+      if (_data.messages.length > MAX_MESSAGES) {
+        _data.messages = _data.messages.slice(-MAX_MESSAGES);
+      }
       renderMessages();
       document.getElementById('input').value = '';
       const snapshot = cloneData(_data);
@@ -674,7 +672,7 @@
       }
     }
 
-    // ==================== 事件绑定 ====================
+    // ==================== 7. 事件绑定 ====================
     document.getElementById('submit-btn').addEventListener('click', () => {
       const text = document.getElementById('input').value.trim();
       if (!text) return;
@@ -725,7 +723,7 @@
       }
     });
 
-    // 管理员入口
+    // 管理员入口（隐藏）
     let clickCount = 0;
     let clickTimer = null;
     document.getElementById('main-title').addEventListener('click', () => {
@@ -755,7 +753,7 @@
       if (e.key === 'Enter') handleAdminAction();
     });
 
-    // 启动
+    // ==================== 8. 启动 ====================
     refresh();
     setInterval(refresh, 30000);
   </script>
