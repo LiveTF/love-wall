@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
+    /* 清新风格，保留原有设计 */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Noto Sans SC', sans-serif;
@@ -27,12 +28,7 @@
       box-shadow: 0 20px 40px rgba(0,0,0,0.08);
       padding: 30px 28px;
     }
-    h1 {
-      text-align: center;
-      font-weight: 500;
-      color: #4a6fa5;
-      margin-bottom: 20px;
-    }
+    h1 { text-align: center; font-weight: 500; color: #4a6fa5; margin-bottom: 20px; }
     h1::before, h1::after { content: "💌"; font-size: 1.5rem; }
     #messages {
       background: #fff;
@@ -52,128 +48,58 @@
       background: #f8faff;
       border-radius: 12px;
       border-left: 4px solid #7aa2d6;
-      transition: all 0.2s;
       animation: fadeIn 0.3s;
     }
-    .msg:hover { background: #edf2ff; }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    .msg-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 6px;
-    }
-    .msg-content {
-      flex: 1;
-      color: #2c3e50;
-      line-height: 1.6;
-      word-break: break-word;
-      cursor: pointer;
-      padding-right: 8px;
-    }
+    .msg-header { display: flex; justify-content: space-between; align-items: flex-start; }
+    .msg-content { flex: 1; color: #2c3e50; line-height: 1.6; word-break: break-word; cursor: pointer; }
     .msg-content:hover { color: #1a2b4c; }
-    .msg-time {
-      font-size: 0.7rem;
-      color: #95a5a6;
-      white-space: nowrap;
-      align-self: flex-start;
-    }
+    .msg-time { font-size: 0.7rem; color: #95a5a6; white-space: nowrap; }
     .msg-stats {
-      display: flex;
-      gap: 16px;
-      font-size: 0.8rem;
-      color: #5a6b7c;
-      margin-top: 4px;
-      align-items: center;
+      display: flex; gap: 16px; font-size: 0.8rem; color: #5a6b7c; margin-top: 4px; align-items: center;
     }
     .msg-stats span {
-      cursor: pointer;
-      user-select: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      transition: 0.2s;
+      cursor: pointer; user-select: none; display: inline-flex; align-items: center; gap: 4px; transition: 0.2s;
     }
-    .msg-stats .like-btn:hover { color: #e74c3c; }
-    .msg-stats .dislike-btn:hover { color: #3498db; }
-    .msg-stats .reply-toggle:hover { color: #2ecc71; }
-    .msg-stats .active-like { color: #e74c3c; font-weight: bold; }
-    .msg-stats .active-dislike { color: #3498db; font-weight: bold; }
+    .like-btn:hover { color: #e74c3c; }
+    .dislike-btn:hover { color: #3498db; }
+    .reply-toggle:hover { color: #2ecc71; }
+    .active-like { color: #e74c3c; font-weight: bold; }
+    .active-dislike { color: #3498db; font-weight: bold; }
 
     .reply-section {
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 1px dashed #d0d7e6;
-      display: none;
-      animation: fadeIn 0.2s;
+      margin-top: 10px; padding-top: 10px; border-top: 1px dashed #d0d7e6; display: none; animation: fadeIn 0.2s;
     }
     .reply-section.open { display: block; }
     .reply-item {
-      padding: 8px 10px;
-      margin-bottom: 6px;
-      background: #fff;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      color: #2c3e50;
-      display: flex;
-      justify-content: space-between;
+      padding: 8px 10px; margin-bottom: 6px; background: #fff; border-radius: 8px; font-size: 0.85rem;
+      color: #2c3e50; display: flex; justify-content: space-between;
     }
     .reply-text { flex: 1; word-break: break-word; }
     .reply-time { font-size: 0.7rem; color: #aaa; margin-left: 10px; white-space: nowrap; }
-    .reply-input-wrap {
-      display: flex;
-      gap: 6px;
-      margin-top: 8px;
-    }
+    .reply-input-wrap { display: flex; gap: 6px; margin-top: 8px; }
     .reply-input {
-      flex: 1;
-      padding: 8px 10px;
-      border: 2px solid #e0e7f0;
-      border-radius: 10px;
-      font-size: 0.85rem;
-      outline: none;
-      font-family: inherit;
+      flex: 1; padding: 8px 10px; border: 2px solid #e0e7f0; border-radius: 10px; font-size: 0.85rem;
+      outline: none; font-family: inherit;
     }
     .reply-input:focus { border-color: #7aa2d6; }
     .reply-submit {
-      padding: 8px 16px;
-      background: #7aa2d6;
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      font-weight: 500;
-      font-size: 0.85rem;
-      white-space: nowrap;
+      padding: 8px 16px; background: #7aa2d6; color: #fff; border: none; border-radius: 10px;
+      cursor: pointer; font-weight: 500; font-size: 0.85rem; white-space: nowrap;
     }
     .reply-submit:hover { background: #5d8ac8; }
 
     textarea#input {
-      width: 100%;
-      height: 70px;
-      padding: 14px 16px;
-      border: 2px solid #e0e7f0;
-      border-radius: 16px;
-      resize: none;
-      outline: none;
-      transition: border 0.3s;
-      font-family: inherit;
+      width: 100%; height: 70px; padding: 14px 16px; border: 2px solid #e0e7f0;
+      border-radius: 16px; resize: none; outline: none; font-family: inherit;
     }
     textarea#input:focus { border-color: #7aa2d6; }
     button#submit-btn {
-      width: 100%;
-      padding: 12px;
-      background: linear-gradient(135deg, #7aa2d6, #5d8ac8);
-      color: white;
-      border: none;
-      border-radius: 14px;
-      cursor: pointer;
-      font-weight: 500;
-      transition: 0.3s;
-      margin-top: 12px;
+      width: 100%; padding: 12px; background: linear-gradient(135deg, #7aa2d6, #5d8ac8);
+      color: white; border: none; border-radius: 14px; cursor: pointer; font-weight: 500; transition: 0.3s; margin-top: 12px;
     }
     button#submit-btn:hover { background: linear-gradient(135deg, #5d8ac8, #4a6fa5); }
     #status { margin-top: 10px; color: #4a6fa5; text-align: center; min-height: 22px; }
@@ -186,160 +112,161 @@
     <h1>匿名表白墙</h1>
     <div id="messages">加载中...</div>
     <textarea id="input" placeholder="写下你想说的话（支持所有语言、emoji）..." maxlength="500"></textarea>
-    <button id="submit-btn" onclick="submit()">🌿 匿名提交</button>
+    <button id="submit-btn">🌿 匿名提交</button>
     <p id="status"></p>
     <div id="error-detail"></div>
   </div>
 
   <script>
-    // ==================== 配置 ====================
+    // ==================== 1. 配置与 Token ====================
     const P1 = 'Z2hwX00xRFFWTkdEWFZmYTFJQkty';
     const P2 = 'OTZGdVlJRzlyQmx5czNxQXMzWQ==';
     const TOKEN = atob(P1 + P2);
-    const REPO_OWNER = 'LiveTF';
-    const REPO_NAME = 'love-wall';
-    const BRANCH = 'main';
-    const DATA_PATH = 'msg.json';
-    const RAW_URL = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${BRANCH}/${DATA_PATH}`;
-    const API_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${DATA_PATH}`;
+    const CONFIG = {
+      owner: 'LiveTF',
+      repo: 'love-wall',
+      branch: 'main',
+      dataPath: 'msg.json',
+      get rawUrl() { return `https://raw.githubusercontent.com/${this.owner}/${this.repo}/${this.branch}/${this.dataPath}?t=${Date.now()}_${Math.random().toString(36)}`; },
+      get apiUrl() { return `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${this.dataPath}`; }
+    };
 
-    // 编码
-    function encodeContent(str) {
+    // ==================== 2. 工具函数 ====================
+    function encodeUTF8(str) {
       const bytes = new TextEncoder().encode(str);
       let binary = '';
       for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
       return btoa(binary);
     }
-    function decodeContent(base64) {
+    function decodeUTF8(base64) {
       const binary = atob(base64);
-      const len = binary.length;
-      const bytes = new Uint8Array(len);
-      for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
       return new TextDecoder().decode(bytes);
     }
+    function escapeHtml(s) {
+      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+    function formatTime(ts) {
+      return new Date(ts).toLocaleString();
+    }
 
-    // 状态
+    // ==================== 3. 数据存储（Store）====================
     const MAX_MESSAGES = 500;
     let _data = [];
     let _isSaving = false;
-    let _pendingChanges = [];
-    let countdownInterval = null;
-    // 本地点赞/点踩记录 { msgId: 'like' | 'dislike' }
-    const voteRecord = JSON.parse(localStorage.getItem('lovewall_votes') || '{}');
+    let _pendingSaves = [];
 
-    function saveVoteRecord() {
-      localStorage.setItem('lovewall_votes', JSON.stringify(voteRecord));
-    }
-
-    function clearCountdown() {
-      if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
-    }
-    function startCountdown(seconds) {
-      clearCountdown();
-      const statusEl = document.getElementById('status');
-      let remaining = seconds;
-      statusEl.innerText = `✅ 操作成功！${remaining} 秒后自动刷新数据...`;
-      countdownInterval = setInterval(() => {
-        remaining--;
-        if (remaining <= 0) { clearCountdown(); statusEl.innerText = '正在刷新...'; load(); }
-        else statusEl.innerText = `✅ 操作成功！${remaining} 秒后自动刷新数据...`;
-      }, 1000);
-    }
+    // 本地点赞记录
+    const voteRecord = JSON.parse(localStorage.getItem('lv_votes') || '{}');
+    function saveVoteRecord() { localStorage.setItem('lv_votes', JSON.stringify(voteRecord)); }
 
     async function loadFromAPI() {
-      const res = await fetch(API_URL, {
+      const res = await fetch(CONFIG.apiUrl, {
         headers: { 'Authorization': `Bearer ${TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
       });
       if (!res.ok) throw new Error(`API 读取失败 (${res.status})`);
       const json = await res.json();
-      return JSON.parse(decodeContent(json.content.replace(/\n/g, '')));
+      return JSON.parse(decodeUTF8(json.content.replace(/\n/g, '')));
     }
     async function loadFromRaw() {
-      const res = await fetch(`${RAW_URL}?t=${Date.now()}_${Math.random().toString(36)}`, { cache: 'no-cache' });
+      const res = await fetch(CONFIG.rawUrl, { cache: 'no-cache' });
       if (!res.ok) throw new Error(`Raw 读取失败 (${res.status})`);
       return await res.json();
     }
+
     async function loadData() {
       try { _data = await loadFromAPI(); }
-      catch (e) { console.warn('降级到 raw:', e.message); _data = await loadFromRaw(); }
-      // 确保每条留言都有必要的字段（兼容旧数据）
+      catch (e) { console.warn('降级 raw:', e.message); _data = await loadFromRaw(); }
+      // 确保每条留言结构完整
       _data.forEach(msg => {
-        if (typeof msg.likes !== 'number') msg.likes = 0;
-        if (typeof msg.dislikes !== 'number') msg.dislikes = 0;
-        if (!Array.isArray(msg.replies)) msg.replies = [];
+        msg.likes = msg.likes || 0;
+        msg.dislikes = msg.dislikes || 0;
+        msg.replies = msg.replies || [];
       });
       return _data;
     }
 
     async function saveData() {
-      return new Promise(async (resolve, reject) => {
-        if (_isSaving) { _pendingChanges.push({ resolve, reject }); return; }
+      return new Promise((resolve, reject) => {
+        if (_isSaving) { _pendingSaves.push({ resolve, reject }); return; }
         _isSaving = true;
-        try {
-          const getRes = await fetch(API_URL, {
-            headers: { 'Authorization': `Bearer ${TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
-          });
-          if (!getRes.ok) throw new Error(`获取 SHA 失败 (${getRes.status})`);
-          const fileInfo = await getRes.json();
-          const sha = fileInfo.sha;
 
-          const jsonStr = JSON.stringify(_data, null, 2);
-          const contentBase64 = encodeContent(jsonStr);
-          const putRes = await fetch(API_URL, {
-            method: 'PUT',
-            headers: {
-              'Authorization': `Bearer ${TOKEN}`,
-              'Accept': 'application/vnd.github.v3+json',
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              message: `update [${new Date().toLocaleString('zh-CN')}]`,
-              content: contentBase64,
-              sha: sha,
-              branch: BRANCH
-            })
-          });
-          if (!putRes.ok) throw new Error(`保存失败 (${putRes.status})`);
-          _isSaving = false;
-          resolve();
-          if (_pendingChanges.length > 0) {
-            const next = _pendingChanges.shift();
-            saveData().then(next.resolve).catch(next.reject);
+        const saveProcess = async () => {
+          try {
+            // 获取最新 SHA，防止覆盖
+            const getRes = await fetch(CONFIG.apiUrl, {
+              headers: { 'Authorization': `Bearer ${TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
+            });
+            if (!getRes.ok) throw new Error(`获取 SHA 失败 (${getRes.status})`);
+            const fileInfo = await getRes.json();
+            const sha = fileInfo.sha;
+
+            const jsonStr = JSON.stringify(_data, null, 2);
+            const contentBase64 = encodeUTF8(jsonStr);
+
+            const putRes = await fetch(CONFIG.apiUrl, {
+              method: 'PUT',
+              headers: {
+                'Authorization': `Bearer ${TOKEN}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                message: `update [${new Date().toLocaleString('zh-CN')}]`,
+                content: contentBase64,
+                sha: sha,
+                branch: CONFIG.branch
+              })
+            });
+            if (!putRes.ok) throw new Error(`保存失败 (${putRes.status})`);
+
+            _isSaving = false;
+            resolve();
+            if (_pendingSaves.length > 0) {
+              const next = _pendingSaves.shift();
+              saveData().then(next.resolve).catch(next.reject);
+            }
+          } catch (err) {
+            _isSaving = false;
+            reject(err);
           }
-        } catch (err) { _isSaving = false; reject(err); }
+        };
+        saveProcess();
       });
     }
 
+    // ==================== 4. 视图渲染 ====================
     function renderMessages() {
-      const msgsEl = document.getElementById('messages');
-      if (!_data || _data.length === 0) {
-        msgsEl.innerHTML = '<div class="empty-msg">✨ 还没有留言，快来写下第一条吧 ~</div>';
+      const container = document.getElementById('messages');
+      if (!_data.length) {
+        container.innerHTML = '<div class="empty-msg">✨ 还没有留言，快来写下第一条吧 ~</div>';
         return;
       }
-      msgsEl.innerHTML = _data.map((m, idx) => {
-        const replyCount = m.replies ? m.replies.length : 0;
-        const userVote = voteRecord[m.id] || '';
+      container.innerHTML = _data.map(msg => {
+        const replyCount = msg.replies.length;
+        const userVote = voteRecord[msg.id] || '';
         return `
-          <div class="msg" data-id="${m.id}">
+          <div class="msg" data-id="${msg.id}">
             <div class="msg-header">
-              <div class="msg-content" onclick="toggleReply('${m.id}')">${escapeHtml(m.text)}</div>
-              <div class="msg-time">${new Date(m.time).toLocaleString()}</div>
+              <div class="msg-content" data-action="toggle-reply" data-id="${msg.id}">${escapeHtml(msg.text)}</div>
+              <div class="msg-time">${formatTime(msg.time)}</div>
             </div>
             <div class="msg-stats">
-              <span class="like-btn ${userVote==='like'?'active-like':''}" onclick="handleVote('${m.id}','like')">👍 ${m.likes||0}</span>
-              <span class="dislike-btn ${userVote==='dislike'?'active-dislike':''}" onclick="handleVote('${m.id}','dislike')">👎 ${m.dislikes||0}</span>
-              <span class="reply-toggle" onclick="toggleReply('${m.id}')">💬 ${replyCount}</span>
+              <span class="like-btn ${userVote==='like'?'active-like':''}" data-action="vote" data-id="${msg.id}" data-type="like">👍 ${msg.likes}</span>
+              <span class="dislike-btn ${userVote==='dislike'?'active-dislike':''}" data-action="vote" data-id="${msg.id}" data-type="dislike">👎 ${msg.dislikes}</span>
+              <span class="reply-toggle" data-action="toggle-reply" data-id="${msg.id}">💬 ${replyCount}</span>
             </div>
-            <div class="reply-section" id="replies-${m.id}">
-              ${(m.replies||[]).map(r => `
+            <div class="reply-section" id="replies-${msg.id}">
+              ${msg.replies.map(r => `
                 <div class="reply-item">
                   <div class="reply-text">${escapeHtml(r.text)}</div>
-                  <div class="reply-time">${new Date(r.time).toLocaleString()}</div>
+                  <div class="reply-time">${formatTime(r.time)}</div>
                 </div>
               `).join('')}
               <div class="reply-input-wrap">
-                <input class="reply-input" id="reply-input-${m.id}" placeholder="写下回复..." maxlength="300" />
-                <button class="reply-submit" onclick="submitReply('${m.id}')">回复</button>
+                <input class="reply-input" id="reply-input-${msg.id}" placeholder="写下回复..." maxlength="300" />
+                <button class="reply-submit" data-action="submit-reply" data-id="${msg.id}">回复</button>
               </div>
             </div>
           </div>
@@ -347,42 +274,77 @@
       }).join('');
     }
 
-    function toggleReply(id) {
-      const section = document.getElementById(`replies-${id}`);
-      if (section) section.classList.toggle('open');
+    // ==================== 5. 应用逻辑 ====================
+    const statusEl = document.getElementById('status');
+    const errorBox = document.getElementById('error-detail');
+    let countdownTimer = null;
+
+    function setStatus(text, isError = false) {
+      statusEl.innerText = text;
+      if (isError) {
+        errorBox.style.display = 'block';
+        errorBox.innerText = text;
+      } else {
+        errorBox.style.display = 'none';
+      }
+    }
+
+    function startCountdown(seconds) {
+      clearInterval(countdownTimer);
+      let remaining = seconds;
+      statusEl.innerText = `✅ 操作成功！${remaining} 秒后自动刷新...`;
+      countdownTimer = setInterval(() => {
+        remaining--;
+        if (remaining <= 0) {
+          clearInterval(countdownTimer);
+          statusEl.innerText = '正在刷新...';
+          refresh();
+        } else {
+          statusEl.innerText = `✅ 操作成功！${remaining} 秒后自动刷新...`;
+        }
+      }, 1000);
+    }
+
+    async function refresh() {
+      try {
+        await loadData();
+        renderMessages();
+        setStatus('');
+      } catch (e) {
+        setStatus('❌ 刷新数据失败：' + e.message, true);
+      }
     }
 
     async function handleVote(msgId, type) {
-      const current = voteRecord[msgId];
       const msg = _data.find(m => m.id === msgId);
       if (!msg) return;
 
+      const current = voteRecord[msgId];
       if (current === type) {
-        // 取消相同操作
+        // 取消
         delete voteRecord[msgId];
-        if (type === 'like') msg.likes = Math.max(0, (msg.likes||0) - 1);
-        else msg.dislikes = Math.max(0, (msg.dislikes||0) - 1);
+        if (type === 'like') msg.likes = Math.max(0, msg.likes - 1);
+        else msg.dislikes = Math.max(0, msg.dislikes - 1);
       } else {
-        // 如果之前有过相反的投票，先撤销
+        // 先撤销之前的相反操作
         if (current) {
-          if (current === 'like') msg.likes = Math.max(0, (msg.likes||0) - 1);
-          else msg.dislikes = Math.max(0, (msg.dislikes||0) - 1);
+          if (current === 'like') msg.likes = Math.max(0, msg.likes - 1);
+          else msg.dislikes = Math.max(0, msg.dislikes - 1);
           delete voteRecord[msgId];
         }
-        // 记录新操作
         voteRecord[msgId] = type;
-        if (type === 'like') msg.likes = (msg.likes||0) + 1;
-        else msg.dislikes = (msg.dislikes||0) + 1;
+        if (type === 'like') msg.likes += 1;
+        else msg.dislikes += 1;
       }
       saveVoteRecord();
 
       try {
         await saveData();
-        renderMessages(); // 局部更新
-        document.getElementById('status').innerText = '✅ 投票已记录';
+        renderMessages();
+        setStatus('✅ 投票已更新');
       } catch (e) {
-        document.getElementById('status').innerText = '❌ 投票失败';
-        console.error(e);
+        setStatus('❌ 投票失败：' + e.message, true);
+        await refresh(); // 回滚显示
       }
     }
 
@@ -390,77 +352,89 @@
       const input = document.getElementById(`reply-input-${msgId}`);
       const text = input.value.trim();
       if (!text) return;
+
       const msg = _data.find(m => m.id === msgId);
       if (!msg) return;
-      if (!msg.replies) msg.replies = [];
       msg.replies.push({
         id: Date.now().toString(36) + Math.random().toString(36).slice(2,8),
         text: text.slice(0,300),
         time: new Date().toISOString()
       });
       input.value = '';
+
       try {
         await saveData();
         renderMessages();
         document.getElementById(`replies-${msgId}`).classList.add('open');
         startCountdown(60);
       } catch (e) {
-        document.getElementById('status').innerText = '❌ 回复失败';
-        console.error(e);
+        setStatus('❌ 回复失败：' + e.message, true);
+        await refresh();
       }
     }
 
-    async function load() {
-      const errBox = document.getElementById('error-detail');
-      try {
-        await loadData();
-        renderMessages();
-        errBox.style.display = 'none';
-      } catch (e) {
-        document.getElementById('messages').innerHTML = '<div class="empty-msg">加载失败，请刷新页面</div>';
-        errBox.style.display = 'block';
-        errBox.innerText = '❌ 加载失败：' + e.message;
-      }
-    }
+    async function handleNewPost(text) {
+      if (!_data) await loadData();
+      _data.push({
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2,8),
+        text: text.slice(0,500),
+        time: new Date().toISOString(),
+        likes: 0,
+        dislikes: 0,
+        replies: []
+      });
+      if (_data.length > MAX_MESSAGES) _data = _data.slice(-MAX_MESSAGES);
 
-    async function submit() {
-      const textarea = document.getElementById('input');
-      const text = textarea.value.trim();
-      const status = document.getElementById('status');
-      if (!text) return;
-      clearCountdown();
-      status.innerText = '提交中...';
-      document.getElementById('error-detail').style.display = 'none';
       try {
-        if (!_data) await loadData();
-        _data.push({
-          id: Date.now().toString(36) + Math.random().toString(36).slice(2,8),
-          text: text.slice(0,500),
-          time: new Date().toISOString(),
-          likes: 0,
-          dislikes: 0,
-          replies: []
-        });
-        if (_data.length > MAX_MESSAGES) _data = _data.slice(-MAX_MESSAGES);
         await saveData();
-        textarea.value = '';
-        await load();
+        document.getElementById('input').value = '';
+        await refresh();
         startCountdown(60);
       } catch (e) {
-        clearCountdown();
-        status.innerText = '❌ 提交失败，请稍后重试';
-        document.getElementById('error-detail').style.display = 'block';
-        document.getElementById('error-detail').innerText = e.message;
+        setStatus('❌ 提交失败：' + e.message, true);
       }
     }
 
-    function escapeHtml(s) {
-      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    }
+    // ==================== 6. 事件绑定 ====================
+    document.getElementById('submit-btn').addEventListener('click', () => {
+      const text = document.getElementById('input').value.trim();
+      if (!text) return;
+      setStatus('提交中...');
+      handleNewPost(text);
+    });
 
-    // 启动
-    load();
-    setInterval(load, 30000); // 30秒自动刷新，避免频繁请求
+    // 使用事件委托处理留言列表中的所有交互
+    document.getElementById('messages').addEventListener('click', (e) => {
+      const target = e.target.closest('[data-action]');
+      if (!target) return;
+      const action = target.dataset.action;
+      const msgId = target.dataset.id;
+
+      if (action === 'toggle-reply') {
+        const section = document.getElementById(`replies-${msgId}`);
+        if (section) section.classList.toggle('open');
+      }
+      else if (action === 'vote') {
+        const type = target.dataset.type;
+        handleVote(msgId, type);
+      }
+      else if (action === 'submit-reply') {
+        submitReply(msgId);
+      }
+    });
+
+    // 支持回车提交新留言
+    document.getElementById('input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        document.getElementById('submit-btn').click();
+      }
+    });
+
+    // 首次加载
+    refresh();
+    // 每30秒自动刷新（温和频率）
+    setInterval(refresh, 30000);
   </script>
 </body>
 </html>
