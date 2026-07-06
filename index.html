@@ -1,91 +1,106 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh">
 <head>
-    <meta charset="UTF-8">
-    <title>匿名表白墙</title>
-    <style>
-        *{box-sizing: border-box;margin:0;padding:0;font-family:system-ui}
-        body{max-width:700px;margin:30px auto;padding:0 20px;background:#f7f7f7}
-        .box{background:#fff;padding:20px;border-radius:12px;box-shadow:0 2px 8px #00000010;margin-bottom:20px}
-        textarea{width:100%;height:100px;padding:12px;border:1px solid #ddd;border-radius:8px;margin-bottom:10px;font-size:16px}
-        button{padding:10px 24px;background:#ff6b81;color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer}
-        .msg-item{padding:12px;border-bottom:1px solid #eee}
-        .time{color:#999;font-size:13px;margin-top:4px}
-    </style>
+  <meta charset="UTF-8">
+  <title>匿名表白墙</title>
+  <style>
+    body{max-width:600px;margin:20px auto;font-family:sans-serif;}
+    #messages{border:1px solid #ccc;padding:10px;height:300px;overflow-y:auto;margin-bottom:15px;}
+    .msg{border-bottom:1px solid #eee;padding:5px 0;}
+    .time{color:#999;font-size:0.8em;}
+    textarea{width:100%;height:60px;}
+    button{margin-top:5px;}
+  </style>
 </head>
 <body>
-    <div class="box">
-        <h2>💌 匿名表白墙</h2>
-        <textarea id="inputText" placeholder="输入你想说的话，所有人匿名可见"></textarea>
-        <button onclick="submitMsg()">提交表白</button>
-        <p id="tip" style="margin-top:10px;color:#666"></p>
-    </div>
+  <h1>匿名表白墙</h1>
+  <div id="messages">加载中...</div>
+  <textarea id="input" placeholder="说点什么（最多500字）" maxlength="500"></textarea><br>
+  <button onclick="submit()">匿名提交</button>
+  <p id="status"></p>
 
-    <div class="box">
-        <h3>全部留言</h3>
-        <div id="wall"></div>
-    </div>
+  <script>
+    // !!! 把下面这一行替换成你刚复制的 PAT !!!
+    const TOKEN = 'github_pat_xxxxxxxxxxxxxxxxxxxxxxxxxx';
+    const REPO = '你的用户名/love-wall';   // 改成你的用户名和仓库名
+    const PATH = 'msg.json';
 
-<script>
-const OWNER = "LiveTF";
-const REPO = "love-wall";
-
-async function loadWall() {
-    try {
-        const random = new Date().getTime();
-        const res = await fetch(`https://LiveTF.github.io/love-wall/msg.json?t=${random}`, {cache: "no-store"});
-        if (!res.ok) throw "文件读取失败";
-        const raw = await res.text();
-        const msgList = JSON.parse(raw.trim());
-        let html = "";
-        msgList.reverse().forEach(item=>{
-            html += `
-                <div class="msg-item">
-                    <div>${item.text}</div>
-                    <div class="time">${item.time}</div>
-                </div>
-            `
-        })
-        document.getElementById("wall").innerHTML = html;
-    }catch(e){
-        console.error("加载错误详情：", e);
-        document.getElementById("wall").innerText = "加载失败，请刷新页面";
+    async function load() {
+      try {
+        const res = await fetch(`msg.json?t=${Date.now()}`);
+        const data = await res.json();
+        const msgs = document.getElementById('messages');
+        msgs.innerHTML = data.map(m =>
+          `<div class="msg"><div>${escapeHtml(m.text)}</div><div class="time">${new Date(m.time).toLocaleString()}</div></div>`
+        ).join('') || '还没有留言，抢沙发～';
+      } catch (e) {
+        document.getElementById('messages').innerText = '加载失败';
+      }
     }
-}
 
-async function submitMsg() {
-    const text = document.getElementById("inputText").value.trim();
-    const tip = document.getElementById("tip");
-    if(!text){
-        tip.innerText = "请输入内容！";
-        return;
-    }
-    tip.innerText = "正在提交，等待10秒自动加载新留言...";
-    try {
-        await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/dispatches`,{
-            method:"POST",
-            headers:{
-                "Accept":"application/vnd.github+json",
-                "Content-Type":"application/json"
-            },
-            body:JSON.stringify({
-                event_type:"wall_submit",
-                client_payload:{
-                    content:text
-                }
-            })
-        })
-        tip.innerText = "提交成功！10秒后自动刷新查看";
-        document.getElementById("inputText").value = "";
-        setTimeout(loadWall,10000);
-    }catch(err){
-        tip.innerText = "提交失败，稍后再试";
-        console.error(err);
-    }
-}
+    async function submit() {
+      const text = document.getElementById('input').value.trim();
+      const status = document.getElementById('status');
+      if (!text) return;
+      status.innerText = '提交中...';
 
-window.onload = loadWall;
-setInterval(loadWall,15000);
-</script>
+      try {
+        // 1. 先获取当前 msg.json
+        const getRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${PATH}`, {
+          headers: {
+            'Authorization': `token ${TOKEN}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+        if (!getRes.ok) throw new Error('读取失败');
+        const file = await getRes.json();
+        const sha = file.sha;
+        let arr = [];
+        try { arr = JSON.parse(atob(file.content)); } catch {}
+
+        // 2. 添加新留言
+        arr.push({
+          id: Date.now().toString(36) + Math.random().toString(36).slice(2),
+          text: text.slice(0, 500),
+          time: new Date().toISOString()
+        });
+        if (arr.length > 500) arr = arr.slice(-500);
+
+        // 3. 更新文件
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(arr, null, 2))));
+        const putRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${PATH}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `token ${TOKEN}`,
+            'Accept': 'application/vnd.github.v3+json'
+          },
+          body: JSON.stringify({
+            message: 'add message',
+            content: content,
+            sha: sha
+          })
+        });
+
+        if (putRes.ok) {
+          status.innerText = '提交成功！稍后刷新可见。';
+          document.getElementById('input').value = '';
+          setTimeout(load, 30000);
+        } else if (putRes.status === 409) {
+          status.innerText = '有人同时提交，请再点一次';
+        } else {
+          status.innerText = '提交失败';
+        }
+      } catch (e) {
+        status.innerText = '网络错误或钥匙不对';
+      }
+    }
+
+    function escapeHtml(s) {
+      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    load();
+    setInterval(load, 30000);
+  </script>
 </body>
 </html>
