@@ -30,10 +30,10 @@
 const OWNER = "LiveTF";
 const REPO = "love-wall";
 
-// 读取留言（修复403静态读取方案）
 async function loadWall() {
     try {
-        const res = await fetch(`https://LiveTF.github.io/love-wall/msg.json`, {cache: "no-cache"});
+        const random = new Date().getTime();
+        const res = await fetch(`https://LiveTF.github.io/love-wall/msg.json?t=${random}`, {cache: "no-store"});
         if (!res.ok) throw "文件读取失败";
         const raw = await res.text();
         const msgList = JSON.parse(raw.trim());
@@ -53,7 +53,6 @@ async function loadWall() {
     }
 }
 
-// 提交函数（之前丢失的核心代码，现在完整存在）
 async function submitMsg() {
     const text = document.getElementById("inputText").value.trim();
     const tip = document.getElementById("tip");
@@ -61,7 +60,7 @@ async function submitMsg() {
         tip.innerText = "请输入内容！";
         return;
     }
-    tip.innerText = "正在提交，等待几秒刷新...";
+    tip.innerText = "正在提交，等待10秒自动加载新留言...";
     try {
         await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/dispatches`,{
             method:"POST",
@@ -76,18 +75,17 @@ async function submitMsg() {
                 }
             })
         })
-        tip.innerText = "提交成功！3秒后刷新查看";
+        tip.innerText = "提交成功！10秒后自动刷新查看";
         document.getElementById("inputText").value = "";
-        setTimeout(loadWall,3000);
+        setTimeout(loadWall,10000);
     }catch(err){
         tip.innerText = "提交失败，稍后再试";
         console.error(err);
     }
 }
 
-// 页面加载自动执行
 window.onload = loadWall;
-setInterval(loadWall,10000);
+setInterval(loadWall,15000);
 </script>
 </body>
 </html>
