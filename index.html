@@ -4,19 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>匿名表白墙</title>
-  <!-- 引入优雅字体 -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-family: 'Noto Sans SC', sans-serif;
       background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
       min-height: 100vh;
       display: flex;
@@ -24,185 +18,83 @@
       align-items: center;
       padding: 20px;
     }
-
     .container {
       width: 100%;
       max-width: 600px;
-      background: rgba(255, 255, 255, 0.85);
+      background: rgba(255,255,255,0.85);
       backdrop-filter: blur(15px);
       border-radius: 24px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), 0 8px 16px rgba(0, 0, 0, 0.04);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.08);
       padding: 30px 28px;
-      transition: all 0.3s ease;
     }
-
     h1 {
       text-align: center;
       font-weight: 500;
-      font-size: 2rem;
       color: #4a6fa5;
       margin-bottom: 20px;
-      letter-spacing: 2px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
     }
-    h1::before, h1::after {
-      content: "💌";
-      font-size: 1.5rem;
-    }
-
+    h1::before, h1::after { content: "💌"; font-size: 1.5rem; }
     #messages {
-      background: #ffffff;
+      background: #fff;
       border-radius: 16px;
       padding: 16px;
       height: 320px;
       overflow-y: auto;
       margin-bottom: 20px;
       box-shadow: inset 0 2px 8px rgba(0,0,0,0.03);
-      border: 1px solid rgba(0,0,0,0.04);
-      transition: all 0.3s;
     }
-
-    /* 自定义滚动条 */
-    #messages::-webkit-scrollbar {
-      width: 6px;
-    }
-    #messages::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    #messages::-webkit-scrollbar-thumb {
-      background: #d4dce6;
-      border-radius: 10px;
-    }
-
+    #messages::-webkit-scrollbar { width: 6px; }
+    #messages::-webkit-scrollbar-thumb { background: #d4dce6; border-radius: 10px; }
     .msg {
       padding: 12px 14px;
       margin-bottom: 10px;
       background: #f8faff;
       border-radius: 12px;
       border-left: 4px solid #7aa2d6;
-      transition: all 0.2s;
-      animation: fadeIn 0.3s ease;
+      animation: fadeIn 0.3s;
     }
-    .msg:hover {
-      background: #edf2ff;
-      transform: translateX(2px);
-    }
-    .msg:last-child {
-      margin-bottom: 0;
-    }
-
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
-
-    .msg .content {
-      font-size: 1rem;
-      color: #2c3e50;
-      line-height: 1.6;
-      word-break: break-word;
-    }
-    .msg .time {
-      font-size: 0.75rem;
-      color: #95a5a6;
-      margin-top: 6px;
-      text-align: right;
-    }
-
-    .input-area {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
+    .msg .content { color: #2c3e50; line-height: 1.6; }
+    .msg .time { font-size: 0.75rem; color: #95a5a6; text-align: right; }
     textarea {
       width: 100%;
       height: 70px;
       padding: 14px 16px;
-      font-size: 0.95rem;
       border: 2px solid #e0e7f0;
       border-radius: 16px;
-      background: #ffffff;
       resize: none;
       outline: none;
-      transition: border 0.3s, box-shadow 0.3s;
-      font-family: inherit;
-      color: #2c3e50;
+      transition: border 0.3s;
     }
-    textarea:focus {
-      border-color: #7aa2d6;
-      box-shadow: 0 0 0 3px rgba(122, 162, 214, 0.2);
-    }
-
+    textarea:focus { border-color: #7aa2d6; }
     button {
       width: 100%;
       padding: 12px;
       background: linear-gradient(135deg, #7aa2d6, #5d8ac8);
       color: white;
-      font-size: 1rem;
-      font-weight: 500;
       border: none;
       border-radius: 14px;
       cursor: pointer;
-      letter-spacing: 1px;
-      transition: all 0.3s;
-      box-shadow: 0 4px 12px rgba(93, 138, 200, 0.3);
-    }
-    button:hover {
-      background: linear-gradient(135deg, #5d8ac8, #4a6fa5);
-      box-shadow: 0 6px 16px rgba(93, 138, 200, 0.4);
-      transform: translateY(-1px);
-    }
-    button:active {
-      transform: translateY(0);
-      box-shadow: 0 2px 8px rgba(93, 138, 200, 0.3);
-    }
-
-    #status {
-      margin-top: 10px;
-      font-size: 0.9rem;
-      font-weight: 400;
-      color: #4a6fa5;
-      text-align: center;
-      min-height: 22px;
-    }
-
-    #error-detail {
-      background: #fff0f0;
-      border: 1px solid #f5c6cb;
-      color: #c92a2a;
-      padding: 12px;
+      font-weight: 500;
+      transition: 0.3s;
       margin-top: 12px;
-      border-radius: 12px;
-      white-space: pre-wrap;
-      font-size: 0.85rem;
-      display: none;
     }
-
-    /* 响应式 */
-    @media (max-width: 500px) {
-      .container {
-        padding: 20px 18px;
-      }
-      h1 {
-        font-size: 1.6rem;
-      }
-    }
+    button:hover { background: linear-gradient(135deg, #5d8ac8, #4a6fa5); }
+    #status { margin-top: 10px; color: #4a6fa5; text-align: center; }
+    #error-detail { background: #fff0f0; color: #c92a2a; padding: 12px; margin-top: 12px; border-radius: 12px; display: none; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>匿名表白墙</h1>
     <div id="messages">加载中...</div>
-    <div class="input-area">
-      <textarea id="input" placeholder="写下你想说的话..." maxlength="500"></textarea>
-      <button onclick="submit()">🌿 匿名提交</button>
-      <p id="status"></p>
-      <div id="error-detail"></div>
-    </div>
+    <textarea id="input" placeholder="写下你想说的话..." maxlength="500"></textarea>
+    <button onclick="submit()">🌿 匿名提交</button>
+    <p id="status"></p>
+    <div id="error-detail"></div>
   </div>
 
   <script>
@@ -210,17 +102,23 @@
     const P1 = 'Z2hwX00xRFFWTkdEWFZmYTFJQkty';
     const P2 = 'OTZGdVlJRzlyQmx5czNxQXMzWQ==';
     // ===========================================
-    
     const TOKEN = atob(P1 + P2);
     const REPO = 'LiveTF/love-wall';
     const PATH = 'msg.json';
     let countdownInterval = null;
 
-    function clearCountdown() {
-      if (countdownInterval) {
-        clearInterval(countdownInterval);
-        countdownInterval = null;
+    // ✅ 100% 可靠的 UTF-8 转 Base64（逐字节拼接，避免溢出）
+    function utf8ToBase64(str) {
+      const bytes = new TextEncoder().encode(str);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
       }
+      return btoa(binary);
+    }
+
+    function clearCountdown() {
+      if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
     }
 
     function startCountdown(seconds) {
@@ -242,23 +140,15 @@
 
     async function load() {
       const msgsEl = document.getElementById('messages');
-      const errBox = document.getElementById('error-detail');
       try {
         const res = await fetch(`${PATH}?t=${Date.now()}_${Math.random()}`);
         if (!res.ok) throw new Error('加载失败');
         const data = await res.json();
-        if (!Array.isArray(data)) throw new Error('数据格式错误');
         msgsEl.innerHTML = data.map(m =>
-          `<div class="msg">
-            <div class="content">${escapeHtml(m.text || '')}</div>
-            <div class="time">${new Date(m.time).toLocaleString()}</div>
-          </div>`
+          `<div class="msg"><div class="content">${escapeHtml(m.text||'')}</div><div class="time">${new Date(m.time).toLocaleString()}</div></div>`
         ).join('') || '<div style="text-align:center;color:#aaa;padding:30px;">✨ 还没有留言，快来写下第一条吧 ~</div>';
-        errBox.style.display = 'none';
       } catch (e) {
         msgsEl.innerHTML = '<div style="text-align:center;color:#e74c3c;padding:30px;">加载失败，请刷新页面</div>';
-        errBox.style.display = 'block';
-        errBox.innerText = '❌ 加载失败：' + e.message;
       }
     }
 
@@ -274,16 +164,9 @@
 
       try {
         const getRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${PATH}`, {
-          headers: {
-            'Authorization': `token ${TOKEN}`,
-            'Accept': 'application/vnd.github.v3+json'
-          }
+          headers: { 'Authorization': `token ${TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
         });
-        if (!getRes.ok) {
-          const errBody = await getRes.text();
-          throw new Error(`读取失败 (${getRes.status})\n${errBody}`);
-        }
-
+        if (!getRes.ok) throw new Error(await getRes.text());
         const file = await getRes.json();
         const sha = file.sha;
         let arr = [];
@@ -297,37 +180,27 @@
         if (arr.length > 500) arr = arr.slice(-500);
 
         const jsonStr = JSON.stringify(arr, null, 2);
-        const utf8Bytes = new TextEncoder().encode(jsonStr);
-        const content = btoa(String.fromCharCode(...utf8Bytes));
+        const content = utf8ToBase64(jsonStr);   // ✅ 关键修复
 
         const putRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${PATH}`, {
           method: 'PUT',
-          headers: {
-            'Authorization': `token ${TOKEN}`,
-            'Accept': 'application/vnd.github.v3+json'
-          },
-          body: JSON.stringify({
-            message: 'add message',
-            content: content,
-            sha: sha
-          })
+          headers: { 'Authorization': `token ${TOKEN}`, 'Accept': 'application/vnd.github.v3+json' },
+          body: JSON.stringify({ message: 'add message', content: content, sha: sha })
         });
 
         if (putRes.ok) {
           document.getElementById('input').value = '';
           startCountdown(60);
         } else if (putRes.status === 409) {
-          status.innerText = '⚠️ 有人同时提交，请再点一次';
+          status.innerText = '⚠️ 有人同时提交，再点一次';
         } else {
-          const errBody = await putRes.text();
-          throw new Error(`更新失败 (${putRes.status})\n${errBody}`);
+          throw new Error(await putRes.text());
         }
       } catch (e) {
         clearCountdown();
         status.innerText = '❌ 提交失败';
         errBox.style.display = 'block';
         errBox.innerText = e.message;
-        console.error('提交异常:', e);
       }
     }
 
