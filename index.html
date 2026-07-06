@@ -23,28 +23,50 @@
   <div id="error-detail"></div>
 
   <script>
-    // ========== 你的分段密钥（已填好，不要改） ==========
-    const P1 = 'Z2hwX00xRFFWTkdEWFZmYTFJQkty';   // 你生成的第一段
-    const P2 = 'OTZGdVlJRzlyQmx5czNxQXMzWQ==';   // 你生成的第二段
-    // =================================================
+    // ========== 你的分段密钥（已填好） ==========
+    const P1 = 'Z2hwX00xRFFWTkdEWFZmYTFJQkty';
+    const P2 = 'OTZGdVlJRzlyQmx5czNxQXMzWQ==';
+    // ===========================================
     
-    const TOKEN = atob(P1 + P2);   // 自动拼回真实 Token
+    const TOKEN = atob(P1 + P2);
     const REPO = 'LiveTF/love-wall';
     const PATH = 'msg.json';
+    // 两种加载路径，如果 raw 直连失败，自动降级为 Pages 相对路径
+    const LOAD_URLS = [
+      `https://raw.githubusercontent.com/${REPO}/main/${PATH}`,
+      `${PATH}`
+    ];
+    let currentLoadUrlIndex = 0;
 
     async function load() {
-      try {
-        // 修改为直连 raw 地址，绕过 Pages 缓存，新留言立刻显示
-        const res = await fetch(`https://raw.githubusercontent.com/${REPO}/main/${PATH}?t=${Date.now()}`);
-        if (!res.ok) throw new Error('加载失败');
-        const data = await res.json();
-        const msgs = document.getElementById('messages');
-        msgs.innerHTML = data.map(m =>
-          `<div class="msg"><div>${escapeHtml(m.text)}</div><div class="time">${new Date(m.time).toLocaleString()}</div></div>`
-        ).join('') || '还没有留言，抢沙发～';
-      } catch (e) {
-        document.getElementById('messages').innerText = '加载失败，请刷新';
+      const msgsEl = document.getElementById('messages');
+      const errBox = document.getElementById('error-detail');
+      let lastError = '';
+
+      // 尝试不同 URL，直到成功
+      for (let i = 0; i < LOAD_URLS.length; i++) {
+        const url = LOAD_URLS[(currentLoadUrlIndex + i) % LOAD_URLS.length];
+        try {
+          const res = await fetch(url + '?t=' + Date.now());
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data = await res.json();
+          if (!Array.isArray(data)) throw new Error('数据格式错误：不是数组');
+          // 成功就更新首选 URL
+          currentLoadUrlIndex = (currentLoadUrlIndex + i) % LOAD_URLS.length;
+          msgsEl.innerHTML = data.map(m =>
+            `<div class="msg"><div>${escapeHtml(m.text || '')}</div><div class="time">${new Date(m.time).toLocaleString()}</div></div>`
+          ).join('') || '还没有留言，抢沙发～';
+          errBox.style.display = 'none';
+          return; // 加载成功，退出
+        } catch (e) {
+          lastError = `路径: ${url}\n错误: ${e.message}`;
+          console.error('加载尝试失败:', url, e);
+        }
       }
+      // 全部失败，显示错误
+      msgsEl.innerText = '加载失败，请刷新';
+      errBox.style.display = 'block';
+      errBox.innerText = '❌ 加载留言失败，原因：\n' + lastError;
     }
 
     async function submit() {
@@ -97,9 +119,8 @@
         if (putRes.ok) {
           status.innerText = '✅ 提交成功！立刻刷新可见。';
           document.getElementById('input').value = '';
-          // 提交成功后立刻重新加载一次，同时保留原有 30 秒后的第二次刷新
-          load();
-          setTimeout(load, 30000);
+          // 立即重新加载，并且用 raw 直连保证实时性
+          await load();
         } else if (putRes.status === 409) {
           status.innerText = '有人同时提交，再点一次';
         } else {
