@@ -38,28 +38,120 @@
       background: #fff;
       border-radius: 16px;
       padding: 16px;
-      height: 320px;
+      height: 380px;
       overflow-y: auto;
       margin-bottom: 20px;
       box-shadow: inset 0 2px 8px rgba(0,0,0,0.03);
     }
     #messages::-webkit-scrollbar { width: 6px; }
     #messages::-webkit-scrollbar-thumb { background: #d4dce6; border-radius: 10px; }
+
     .msg {
       padding: 12px 14px;
       margin-bottom: 10px;
       background: #f8faff;
       border-radius: 12px;
       border-left: 4px solid #7aa2d6;
+      transition: all 0.2s;
       animation: fadeIn 0.3s;
     }
+    .msg:hover { background: #edf2ff; }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    .msg .content { color: #2c3e50; line-height: 1.6; }
-    .msg .time { font-size: 0.75rem; color: #95a5a6; text-align: right; }
-    textarea {
+    .msg-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 6px;
+    }
+    .msg-content {
+      flex: 1;
+      color: #2c3e50;
+      line-height: 1.6;
+      word-break: break-word;
+      cursor: pointer;
+      padding-right: 8px;
+    }
+    .msg-content:hover { color: #1a2b4c; }
+    .msg-time {
+      font-size: 0.7rem;
+      color: #95a5a6;
+      white-space: nowrap;
+      align-self: flex-start;
+    }
+    .msg-stats {
+      display: flex;
+      gap: 16px;
+      font-size: 0.8rem;
+      color: #5a6b7c;
+      margin-top: 4px;
+      align-items: center;
+    }
+    .msg-stats span {
+      cursor: pointer;
+      user-select: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: 0.2s;
+    }
+    .msg-stats .like-btn:hover { color: #e74c3c; }
+    .msg-stats .dislike-btn:hover { color: #3498db; }
+    .msg-stats .reply-toggle:hover { color: #2ecc71; }
+    .msg-stats .active-like { color: #e74c3c; font-weight: bold; }
+    .msg-stats .active-dislike { color: #3498db; font-weight: bold; }
+
+    .reply-section {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed #d0d7e6;
+      display: none;
+      animation: fadeIn 0.2s;
+    }
+    .reply-section.open { display: block; }
+    .reply-item {
+      padding: 8px 10px;
+      margin-bottom: 6px;
+      background: #fff;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      color: #2c3e50;
+      display: flex;
+      justify-content: space-between;
+    }
+    .reply-text { flex: 1; word-break: break-word; }
+    .reply-time { font-size: 0.7rem; color: #aaa; margin-left: 10px; white-space: nowrap; }
+    .reply-input-wrap {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .reply-input {
+      flex: 1;
+      padding: 8px 10px;
+      border: 2px solid #e0e7f0;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      outline: none;
+      font-family: inherit;
+    }
+    .reply-input:focus { border-color: #7aa2d6; }
+    .reply-submit {
+      padding: 8px 16px;
+      background: #7aa2d6;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+    .reply-submit:hover { background: #5d8ac8; }
+
+    textarea#input {
       width: 100%;
       height: 70px;
       padding: 14px 16px;
@@ -68,9 +160,10 @@
       resize: none;
       outline: none;
       transition: border 0.3s;
+      font-family: inherit;
     }
-    textarea:focus { border-color: #7aa2d6; }
-    button {
+    textarea#input:focus { border-color: #7aa2d6; }
+    button#submit-btn {
       width: 100%;
       padding: 12px;
       background: linear-gradient(135deg, #7aa2d6, #5d8ac8);
@@ -82,150 +175,282 @@
       transition: 0.3s;
       margin-top: 12px;
     }
-    button:hover { background: linear-gradient(135deg, #5d8ac8, #4a6fa5); }
-    #status { margin-top: 10px; color: #4a6fa5; text-align: center; }
-    #error-detail { background: #fff0f0; color: #c92a2a; padding: 12px; margin-top: 12px; border-radius: 12px; display: none; }
+    button#submit-btn:hover { background: linear-gradient(135deg, #5d8ac8, #4a6fa5); }
+    #status { margin-top: 10px; color: #4a6fa5; text-align: center; min-height: 22px; }
+    #error-detail { background: #fff0f0; color: #c92a2a; padding: 12px; margin-top: 12px; border-radius: 12px; display: none; white-space: pre-wrap; }
+    .empty-msg { text-align: center; color: #aaa; padding: 30px; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>匿名表白墙</h1>
     <div id="messages">加载中...</div>
-    <textarea id="input" placeholder="写下你想说的话..." maxlength="500"></textarea>
-    <button onclick="submit()">🌿 匿名提交</button>
+    <textarea id="input" placeholder="写下你想说的话（支持所有语言、emoji）..." maxlength="500"></textarea>
+    <button id="submit-btn" onclick="submit()">🌿 匿名提交</button>
     <p id="status"></p>
     <div id="error-detail"></div>
   </div>
 
   <script>
-    // ========== 配置（分段密钥，与之前相同） ==========
+    // ==================== 配置 ====================
     const P1 = 'Z2hwX00xRFFWTkdEWFZmYTFJQkty';
     const P2 = 'OTZGdVlJRzlyQmx5czNxQXMzWQ==';
     const TOKEN = atob(P1 + P2);
-    const REPO = 'LiveTF/love-wall';
-    const PATH = 'msg.json';
-    // 构造 raw 直连地址（绕开 Pages 缓存）
-    const RAW_URL = `https://raw.githubusercontent.com/${REPO}/main/${PATH}`;
-    // ===============================================
+    const REPO_OWNER = 'LiveTF';
+    const REPO_NAME = 'love-wall';
+    const BRANCH = 'main';
+    const DATA_PATH = 'msg.json';
+    const RAW_URL = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${BRANCH}/${DATA_PATH}`;
+    const API_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${DATA_PATH}`;
 
-    let countdownInterval = null;
-
-    // 稳健 UTF-8 转 Base64（新留言不会乱码）
-    function utf8ToBase64(str) {
+    // 编码
+    function encodeContent(str) {
       const bytes = new TextEncoder().encode(str);
       let binary = '';
-      for (let i = 0; i < bytes.length; i++) {
-        binary += String.fromCharCode(bytes[i]);
-      }
+      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
       return btoa(binary);
+    }
+    function decodeContent(base64) {
+      const binary = atob(base64);
+      const len = binary.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
+      return new TextDecoder().decode(bytes);
+    }
+
+    // 状态
+    const MAX_MESSAGES = 500;
+    let _data = [];
+    let _isSaving = false;
+    let _pendingChanges = [];
+    let countdownInterval = null;
+    // 本地点赞/点踩记录 { msgId: 'like' | 'dislike' }
+    const voteRecord = JSON.parse(localStorage.getItem('lovewall_votes') || '{}');
+
+    function saveVoteRecord() {
+      localStorage.setItem('lovewall_votes', JSON.stringify(voteRecord));
     }
 
     function clearCountdown() {
-      if (countdownInterval) {
-        clearInterval(countdownInterval);
-        countdownInterval = null;
-      }
+      if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
     }
-
     function startCountdown(seconds) {
       clearCountdown();
       const statusEl = document.getElementById('status');
       let remaining = seconds;
-      statusEl.innerText = `✅ 提交成功！页面将在 ${remaining} 秒后自动刷新数据...`;
+      statusEl.innerText = `✅ 操作成功！${remaining} 秒后自动刷新数据...`;
       countdownInterval = setInterval(() => {
         remaining--;
-        if (remaining <= 0) {
-          clearCountdown();
-          statusEl.innerText = '正在刷新...';
-          load();  // 静默刷新数据，不再刷新整个页面
-        } else {
-          statusEl.innerText = `✅ 提交成功！页面将在 ${remaining} 秒后自动刷新数据...`;
-        }
+        if (remaining <= 0) { clearCountdown(); statusEl.innerText = '正在刷新...'; load(); }
+        else statusEl.innerText = `✅ 操作成功！${remaining} 秒后自动刷新数据...`;
       }, 1000);
     }
 
-    // 加载留言（优化后：raw 优先，自动降级）
-    async function load() {
-      const msgsEl = document.getElementById('messages');
-      try {
-        let data;
-        // 1. 优先尝试 raw 直连（实时数据，几秒内可见）
+    async function loadFromAPI() {
+      const res = await fetch(API_URL, {
+        headers: { 'Authorization': `Bearer ${TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
+      });
+      if (!res.ok) throw new Error(`API 读取失败 (${res.status})`);
+      const json = await res.json();
+      return JSON.parse(decodeContent(json.content.replace(/\n/g, '')));
+    }
+    async function loadFromRaw() {
+      const res = await fetch(`${RAW_URL}?t=${Date.now()}_${Math.random().toString(36)}`, { cache: 'no-cache' });
+      if (!res.ok) throw new Error(`Raw 读取失败 (${res.status})`);
+      return await res.json();
+    }
+    async function loadData() {
+      try { _data = await loadFromAPI(); }
+      catch (e) { console.warn('降级到 raw:', e.message); _data = await loadFromRaw(); }
+      // 确保每条留言都有必要的字段（兼容旧数据）
+      _data.forEach(msg => {
+        if (typeof msg.likes !== 'number') msg.likes = 0;
+        if (typeof msg.dislikes !== 'number') msg.dislikes = 0;
+        if (!Array.isArray(msg.replies)) msg.replies = [];
+      });
+      return _data;
+    }
+
+    async function saveData() {
+      return new Promise(async (resolve, reject) => {
+        if (_isSaving) { _pendingChanges.push({ resolve, reject }); return; }
+        _isSaving = true;
         try {
-          const rawRes = await fetch(`${RAW_URL}?t=${Date.now()}_${Math.random().toString(36)}`);
-          if (rawRes.ok) {
-            data = await rawRes.json();
-          } else {
-            throw new Error('raw failed');
+          const getRes = await fetch(API_URL, {
+            headers: { 'Authorization': `Bearer ${TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
+          });
+          if (!getRes.ok) throw new Error(`获取 SHA 失败 (${getRes.status})`);
+          const fileInfo = await getRes.json();
+          const sha = fileInfo.sha;
+
+          const jsonStr = JSON.stringify(_data, null, 2);
+          const contentBase64 = encodeContent(jsonStr);
+          const putRes = await fetch(API_URL, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${TOKEN}`,
+              'Accept': 'application/vnd.github.v3+json',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              message: `update [${new Date().toLocaleString('zh-CN')}]`,
+              content: contentBase64,
+              sha: sha,
+              branch: BRANCH
+            })
+          });
+          if (!putRes.ok) throw new Error(`保存失败 (${putRes.status})`);
+          _isSaving = false;
+          resolve();
+          if (_pendingChanges.length > 0) {
+            const next = _pendingChanges.shift();
+            saveData().then(next.resolve).catch(next.reject);
           }
-        } catch (e) {
-          // 2. raw 失败，降级为 Pages 相对路径
-          const res = await fetch(`${PATH}?t=${Date.now()}_${Math.random().toString(36)}`);
-          if (!res.ok) throw new Error('Pages 加载失败');
-          data = await res.json();
+        } catch (err) { _isSaving = false; reject(err); }
+      });
+    }
+
+    function renderMessages() {
+      const msgsEl = document.getElementById('messages');
+      if (!_data || _data.length === 0) {
+        msgsEl.innerHTML = '<div class="empty-msg">✨ 还没有留言，快来写下第一条吧 ~</div>';
+        return;
+      }
+      msgsEl.innerHTML = _data.map((m, idx) => {
+        const replyCount = m.replies ? m.replies.length : 0;
+        const userVote = voteRecord[m.id] || '';
+        return `
+          <div class="msg" data-id="${m.id}">
+            <div class="msg-header">
+              <div class="msg-content" onclick="toggleReply('${m.id}')">${escapeHtml(m.text)}</div>
+              <div class="msg-time">${new Date(m.time).toLocaleString()}</div>
+            </div>
+            <div class="msg-stats">
+              <span class="like-btn ${userVote==='like'?'active-like':''}" onclick="handleVote('${m.id}','like')">👍 ${m.likes||0}</span>
+              <span class="dislike-btn ${userVote==='dislike'?'active-dislike':''}" onclick="handleVote('${m.id}','dislike')">👎 ${m.dislikes||0}</span>
+              <span class="reply-toggle" onclick="toggleReply('${m.id}')">💬 ${replyCount}</span>
+            </div>
+            <div class="reply-section" id="replies-${m.id}">
+              ${(m.replies||[]).map(r => `
+                <div class="reply-item">
+                  <div class="reply-text">${escapeHtml(r.text)}</div>
+                  <div class="reply-time">${new Date(r.time).toLocaleString()}</div>
+                </div>
+              `).join('')}
+              <div class="reply-input-wrap">
+                <input class="reply-input" id="reply-input-${m.id}" placeholder="写下回复..." maxlength="300" />
+                <button class="reply-submit" onclick="submitReply('${m.id}')">回复</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleReply(id) {
+      const section = document.getElementById(`replies-${id}`);
+      if (section) section.classList.toggle('open');
+    }
+
+    async function handleVote(msgId, type) {
+      const current = voteRecord[msgId];
+      const msg = _data.find(m => m.id === msgId);
+      if (!msg) return;
+
+      if (current === type) {
+        // 取消相同操作
+        delete voteRecord[msgId];
+        if (type === 'like') msg.likes = Math.max(0, (msg.likes||0) - 1);
+        else msg.dislikes = Math.max(0, (msg.dislikes||0) - 1);
+      } else {
+        // 如果之前有过相反的投票，先撤销
+        if (current) {
+          if (current === 'like') msg.likes = Math.max(0, (msg.likes||0) - 1);
+          else msg.dislikes = Math.max(0, (msg.dislikes||0) - 1);
+          delete voteRecord[msgId];
         }
+        // 记录新操作
+        voteRecord[msgId] = type;
+        if (type === 'like') msg.likes = (msg.likes||0) + 1;
+        else msg.dislikes = (msg.dislikes||0) + 1;
+      }
+      saveVoteRecord();
 
-        if (!Array.isArray(data)) throw new Error('数据格式错误');
-
-        msgsEl.innerHTML = data.map(m =>
-          `<div class="msg"><div class="content">${escapeHtml(m.text||'')}</div><div class="time">${new Date(m.time).toLocaleString()}</div></div>`
-        ).join('') || '<div style="text-align:center;color:#aaa;padding:30px;">✨ 还没有留言，快来写下第一条吧 ~</div>';
+      try {
+        await saveData();
+        renderMessages(); // 局部更新
+        document.getElementById('status').innerText = '✅ 投票已记录';
       } catch (e) {
-        msgsEl.innerHTML = '<div style="text-align:center;color:#e74c3c;padding:30px;">加载失败，请刷新页面</div>';
+        document.getElementById('status').innerText = '❌ 投票失败';
+        console.error(e);
+      }
+    }
+
+    async function submitReply(msgId) {
+      const input = document.getElementById(`reply-input-${msgId}`);
+      const text = input.value.trim();
+      if (!text) return;
+      const msg = _data.find(m => m.id === msgId);
+      if (!msg) return;
+      if (!msg.replies) msg.replies = [];
+      msg.replies.push({
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2,8),
+        text: text.slice(0,300),
+        time: new Date().toISOString()
+      });
+      input.value = '';
+      try {
+        await saveData();
+        renderMessages();
+        document.getElementById(`replies-${msgId}`).classList.add('open');
+        startCountdown(60);
+      } catch (e) {
+        document.getElementById('status').innerText = '❌ 回复失败';
+        console.error(e);
+      }
+    }
+
+    async function load() {
+      const errBox = document.getElementById('error-detail');
+      try {
+        await loadData();
+        renderMessages();
+        errBox.style.display = 'none';
+      } catch (e) {
+        document.getElementById('messages').innerHTML = '<div class="empty-msg">加载失败，请刷新页面</div>';
+        errBox.style.display = 'block';
+        errBox.innerText = '❌ 加载失败：' + e.message;
       }
     }
 
     async function submit() {
-      const text = document.getElementById('input').value.trim();
+      const textarea = document.getElementById('input');
+      const text = textarea.value.trim();
       const status = document.getElementById('status');
-      const errBox = document.getElementById('error-detail');
       if (!text) return;
-
       clearCountdown();
       status.innerText = '提交中...';
-      errBox.style.display = 'none';
-
+      document.getElementById('error-detail').style.display = 'none';
       try {
-        const getRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${PATH}`, {
-          headers: { 'Authorization': `token ${TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
-        });
-        if (!getRes.ok) throw new Error(await getRes.text());
-        const file = await getRes.json();
-        const sha = file.sha;
-        let arr = [];
-        try { arr = JSON.parse(atob(file.content)); } catch {}
-
-        arr.push({
+        if (!_data) await loadData();
+        _data.push({
           id: Date.now().toString(36) + Math.random().toString(36).slice(2,8),
           text: text.slice(0,500),
-          time: new Date().toISOString()
+          time: new Date().toISOString(),
+          likes: 0,
+          dislikes: 0,
+          replies: []
         });
-        if (arr.length > 500) arr = arr.slice(-500);
-
-        const jsonStr = JSON.stringify(arr, null, 2);
-        const content = utf8ToBase64(jsonStr);
-
-        const putRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${PATH}`, {
-          method: 'PUT',
-          headers: { 'Authorization': `token ${TOKEN}`, 'Accept': 'application/vnd.github.v3+json' },
-          body: JSON.stringify({ message: 'add message', content: content, sha: sha })
-        });
-
-        if (putRes.ok) {
-          document.getElementById('input').value = '';
-          // 立即拉取最新数据（通过 raw 直连，几乎马上就能看到）
-          await load();
-          // 启动倒计时，兜底刷新（如果 raw 暂时还没同步，60秒后再次 load）
-          startCountdown(60);
-        } else if (putRes.status === 409) {
-          status.innerText = '⚠️ 有人同时提交，再点一次';
-        } else {
-          throw new Error(await putRes.text());
-        }
+        if (_data.length > MAX_MESSAGES) _data = _data.slice(-MAX_MESSAGES);
+        await saveData();
+        textarea.value = '';
+        await load();
+        startCountdown(60);
       } catch (e) {
         clearCountdown();
-        status.innerText = '❌ 提交失败';
-        errBox.style.display = 'block';
-        errBox.innerText = e.message;
+        status.innerText = '❌ 提交失败，请稍后重试';
+        document.getElementById('error-detail').style.display = 'block';
+        document.getElementById('error-detail').innerText = e.message;
       }
     }
 
@@ -233,9 +458,9 @@
       return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
 
-    // 首次加载 + 每 10 秒自动刷新（加快同步）
+    // 启动
     load();
-    setInterval(load, 10000);
+    setInterval(load, 30000); // 30秒自动刷新，避免频繁请求
   </script>
 </body>
 </html>
