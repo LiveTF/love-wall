@@ -20,7 +20,13 @@
       "time": "2026-07-06T09:10:57.754Z",
       "likes": 1,
       "dislikes": 0,
-      "replies": []
+      "replies": [
+        {
+          "id": "mr922n1tstpmk1",
+          "text": "这个行哎",
+          "time": "2026-07-06T10:06:51.185Z"
+        }
+      ]
     }
   ],
   "_admin": {
