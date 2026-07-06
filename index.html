@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>匿名表白墙</title>
+    <style>
+        *{box-sizing: border-box;margin:0;padding:0;font-family:system-ui}
+        body{max-width:700px;margin:30px auto;padding:0 20px;background:#f7f7f7}
+        .box{background:#fff;padding:20px;border-radius:12px;box-shadow:0 2px 8px #00000010;margin-bottom:20px}
+        textarea{width:100%;height:100px;padding:12px;border:1px solid #ddd;border-radius:8px;margin-bottom:10px;font-size:16px}
+        button{padding:10px 24px;background:#ff6b81;color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer}
+        .msg-item{padding:12px;border-bottom:1px solid #eee}
+        .time{color:#999;font-size:13px;margin-top:4px}
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2>💌 匿名表白墙</h2>
+        <textarea id="inputText" placeholder="输入你想说的话，所有人匿名可见"></textarea>
+        <button onclick="submitMsg()">提交表白</button>
+        <p id="tip" style="margin-top:10px;color:#666"></p>
+    </div>
+
+    <div class="box">
+        <h3>全部留言</h3>
+        <div id="wall"></div>
+    </div>
+
+<script>
+// ==================== 只改这里3个值！====================
+const OWNER = "你的GitHub用户名";
+const REPO = "love-wall";
+// ======================================================
+
+// 页面加载读取所有表白
+async function loadWall() {
+    try {
+        const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/msg.json`);
+        const file = await res.json();
+        // base64解码json
+        const raw = atob(file.content);
+        const msgList = JSON.parse(raw);
+        // 渲染页面
+        let html = "";
+        // 倒序，最新留言放最上面
+        msgList.reverse().forEach(item=>{
+            html += `
+                <div class="msg-item">
+                    <div>${item.text}</div>
+                    <div class="time">${item.time}</div>
+                </div>
+            `
+        })
+        document.getElementById("wall").innerHTML = html;
+    }catch(e){
+        document.getElementById("wall").innerText = "加载失败，请刷新页面";
+    }
+}
+
+// 访客提交表白（前端无任何Token，纯匿名请求）
+async function submitMsg() {
+    const text = document.getElementById("inputText").value.trim();
+    const tip = document.getElementById("tip");
+    if(!text){
+        tip.innerText = "请输入内容！";
+        return;
+    }
+    tip.innerText = "正在提交，等待几秒刷新...";
+    try {
+        // 匿名触发仓库dispatch事件，不需要任何鉴权密钥
+        await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/dispatches`,{
+            method:"POST",
+            headers:{
+                "Accept":"application/vnd.github+json",
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({
+                event_type:"wall_submit",
+                client_payload:{
+                    content:text
+                }
+            })
+        })
+        tip.innerText = "提交成功！3秒后刷新查看";
+        document.getElementById("inputText").value = "";
+        setTimeout(loadWall,3000);
+    }catch(err){
+        tip.innerText = "提交失败，稍后再试";
+        console.error(err);
+    }
+}
+
+// 打开页面自动加载留言
+window.onload = loadWall;
+// 每10秒自动刷新一次留言
+setInterval(loadWall,10000);
+</script>
+</body>
+</html>
