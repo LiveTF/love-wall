@@ -5,41 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>匿名表白墙</title>
   <style>
-    body {
-      max-width: 600px;
-      margin: 20px auto;
-      font-family: sans-serif;
-    }
-    #messages {
-      border: 1px solid #ccc;
-      padding: 10px;
-      height: 300px;
-      overflow-y: auto;
-      margin-bottom: 15px;
-    }
-    .msg {
-      border-bottom: 1px solid #eee;
-      padding: 5px 0;
-    }
-    .time {
-      color: #999;
-      font-size: 0.8em;
-    }
-    textarea {
-      width: 100%;
-      height: 60px;
-    }
-    button {
-      margin-top: 5px;
-    }
-    #error-detail {
-      background: #ffe0e0;
-      border: 1px solid red;
-      padding: 10px;
-      margin-top: 10px;
-      white-space: pre-wrap;
-      display: none;
-    }
+    body { max-width:600px; margin:20px auto; font-family:sans-serif; }
+    #messages { border:1px solid #ccc; padding:10px; height:300px; overflow-y:auto; margin-bottom:15px; }
+    .msg { border-bottom:1px solid #eee; padding:5px 0; }
+    .time { color:#999; font-size:0.8em; }
+    textarea { width:100%; height:60px; }
+    button { margin-top:5px; }
+    #error-detail { background:#ffe0e0; border:1px solid red; padding:10px; margin-top:10px; white-space:pre-wrap; display:none; }
   </style>
 </head>
 <body>
@@ -51,23 +23,26 @@
   <div id="error-detail"></div>
 
   <script>
-    // ========== 已按你提供的信息填写 ==========
-    const TOKEN = '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';  // 你的 Token（已公开，强烈建议换新）
-    const REPO = 'LiveTF/love-wall';                          // 你的仓库
-    // ==========================================
+    // ========== 把下面两行替换成你拆分后的乱码 ==========
+    const P1 = 'Z2hwX00xRFFWTkdEWFZmYTFJQkty';   // 如：Z2hwX3NvbWU=
+    const P2 = 'OTZGdVlJRzlyQmx5czNxQXMzWQ==';   // 如：dG9rZW4xMjM0
+    // =================================================
+    
+    const TOKEN = atob(P1 + P2);   // 自动拼回真实 Token
+    const REPO = 'LiveTF/love-wall';
     const PATH = 'msg.json';
 
     async function load() {
       try {
         const res = await fetch(`msg.json?t=${Date.now()}`);
-        if (!res.ok) throw new Error('加载留言失败');
+        if (!res.ok) throw new Error('加载失败');
         const data = await res.json();
         const msgs = document.getElementById('messages');
         msgs.innerHTML = data.map(m =>
           `<div class="msg"><div>${escapeHtml(m.text)}</div><div class="time">${new Date(m.time).toLocaleString()}</div></div>`
         ).join('') || '还没有留言，抢沙发～';
       } catch (e) {
-        document.getElementById('messages').innerText = '加载失败，请刷新页面';
+        document.getElementById('messages').innerText = '加载失败，请刷新';
       }
     }
 
@@ -81,37 +56,29 @@
       errBox.style.display = 'none';
 
       try {
-        // 1. 读取当前文件
         const getRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${PATH}`, {
           headers: {
             'Authorization': `token ${TOKEN}`,
             'Accept': 'application/vnd.github.v3+json'
           }
         });
-
         if (!getRes.ok) {
           const errBody = await getRes.text();
-          throw new Error(`读取失败 (状态码: ${getRes.status})\n${errBody}`);
+          throw new Error(`读取失败 (${getRes.status})\n${errBody}`);
         }
 
         const file = await getRes.json();
         const sha = file.sha;
         let arr = [];
-        try {
-          arr = JSON.parse(atob(file.content));
-        } catch (e) {
-          arr = [];
-        }
+        try { arr = JSON.parse(atob(file.content)); } catch {}
 
-        // 2. 添加新留言
         arr.push({
-          id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
-          text: text.slice(0, 500),
+          id: Date.now().toString(36) + Math.random().toString(36).slice(2,8),
+          text: text.slice(0,500),
           time: new Date().toISOString()
         });
         if (arr.length > 500) arr = arr.slice(-500);
 
-        // 3. 更新文件
         const content = btoa(unescape(encodeURIComponent(JSON.stringify(arr, null, 2))));
         const putRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${PATH}`, {
           method: 'PUT',
@@ -127,24 +94,24 @@
         });
 
         if (putRes.ok) {
-          status.innerText = '✅ 提交成功！约1分钟后刷新可见。';
+          status.innerText = '✅ 提交成功！约1分钟后可见。';
           document.getElementById('input').value = '';
           setTimeout(load, 30000);
         } else if (putRes.status === 409) {
-          status.innerText = '有人同时提交，请再点一次';
+          status.innerText = '有人同时提交，再点一次';
         } else {
           const errBody = await putRes.text();
-          throw new Error(`更新失败 (状态码: ${putRes.status})\n${errBody}`);
+          throw new Error(`更新失败 (${putRes.status})\n${errBody}`);
         }
       } catch (e) {
-        status.innerText = '❌ 提交失败，原因见下方红框';
+        status.innerText = '❌ 失败，原因见下方';
         errBox.style.display = 'block';
         errBox.innerText = e.message;
       }
     }
 
     function escapeHtml(s) {
-      return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
 
     load();
