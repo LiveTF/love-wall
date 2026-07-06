@@ -1,5 +1,4 @@
 name: 处理表白提交
-# 监听匿名访客提交事件
 on:
   repository_dispatch:
     types: [wall_submit]
@@ -8,41 +7,33 @@ jobs:
   add-message:
     runs-on: ubuntu-latest
     steps:
-      # 拉取仓库全部文件
       - name: 检出仓库代码
         uses: actions/checkout@v4
 
-      # 读取前端传过来的表白文本
       - name: 获取访客提交内容
         id: get_payload
         run: |
           echo "TEXT=${{ github.event.client_payload.content }}" >> $GITHUB_ENV
 
-      # Python脚本追加表白到msg.json
       - name: 更新表白文件
         run: |
           import json, datetime
-          # 读取现有表白
           with open("msg.json", "r", encoding="utf-8") as f:
               data = json.load(f)
-          # 新增一条表白，附带提交时间
           new_msg = {
               "text": "${{ env.TEXT }}",
               "time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
           }
           data.append(new_msg)
-          # 写回文件
           with open("msg.json", "w", encoding="utf-8") as f:
               json.dump(data, f, ensure_ascii=False, indent=2)
         shell: python
 
-      # 配置Git提交人
       - name: 设置Git用户
         run: |
           git config --global user.name "${{ github.actor }}"
           git config --global user.email "${{ github.actor }}@users.noreply.github.com"
 
-      # 提交修改并推送回仓库
       - name: 提交更新
         env:
           TOKEN: ${{ secrets.GH_PAT }}
