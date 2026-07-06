@@ -30,7 +30,7 @@
 const OWNER = "LiveTF";
 const REPO = "love-wall";
 
-// 修复403：直接读取Pages静态json，不调用github api
+// 读取留言（修复403静态读取方案）
 async function loadWall() {
     try {
         const res = await fetch(`https://LiveTF.github.io/love-wall/msg.json`, {cache: "no-cache"});
@@ -53,6 +53,7 @@ async function loadWall() {
     }
 }
 
+// 提交函数（之前丢失的核心代码，现在完整存在）
 async function submitMsg() {
     const text = document.getElementById("inputText").value.trim();
     const tip = document.getElementById("tip");
@@ -84,6 +85,7 @@ async function submitMsg() {
     }
 }
 
+// 页面加载自动执行
 window.onload = loadWall;
 setInterval(loadWall,10000);
 </script>
