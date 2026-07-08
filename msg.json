@@ -74,7 +74,13 @@
       "time": "2026-07-08T06:34:41.027Z",
       "likes": 0,
       "dislikes": 0,
-      "replies": []
+      "replies": [
+        {
+          "id": "mrbpdldx51yb2r",
+          "text": "3",
+          "time": "2026-07-08T06:34:45.765Z"
+        }
+      ]
     }
   ],
   "_admin": {
