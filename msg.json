@@ -96,7 +96,13 @@
       "time": "2026-07-10T08:55:34.963Z",
       "likes": 1,
       "dislikes": 0,
-      "replies": []
+      "replies": [
+        {
+          "id": "mrepalwqy4mu8o",
+          "text": "我爱你",
+          "time": "2026-07-10T08:55:45.002Z"
+        }
+      ]
     }
   ],
   "_admin": {
