@@ -33,6 +33,45 @@
     #admin-indicator {
       text-align: center; font-size: 0.7rem; color: #e74c3c; font-weight: bold; display: none; margin-bottom: 10px;
     }
+
+    .sort-bar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 8px;
+    }
+    .sort-btn {
+      background: #fff;
+      border: 2px solid #dfe6f0;
+      border-radius: 10px;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #5a6b7c;
+      font-family: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .sort-btn:hover {
+      border-color: #7aa2d6;
+      box-shadow: 0 0 0 3px rgba(122, 162, 214, 0.1);
+    }
+    .sort-arrows {
+      display: flex;
+      flex-direction: column;
+      line-height: 1;
+      gap: 2px;
+    }
+    .sort-arrow {
+      font-size: 0.6rem;
+      color: #ccc;
+      transition: color 0.2s;
+    }
+    .sort-arrow.active {
+      color: #4a6fa5;
+    }
+
     #messages {
       background: #fff;
       border-radius: 16px;
@@ -148,6 +187,17 @@
   <div class="container">
     <h1 id="main-title">匿名表白墙</h1>
     <div id="admin-indicator">🔑 管理员模式</div>
+
+    <div class="sort-bar">
+      <button id="sort-time-btn" class="sort-btn" type="button">
+        <span>时间</span>
+        <span class="sort-arrows">
+          <span class="sort-arrow sort-arrow-up" title="最早在前">▲</span>
+          <span class="sort-arrow sort-arrow-down" title="最新在前">▼</span>
+        </span>
+      </button>
+    </div>
+
     <div id="messages">加载中...</div>
     <textarea id="input" placeholder="写下你想说的话（支持所有语言、emoji）..." maxlength="500"></textarea>
     <button id="submit-btn">🌿 匿名提交</button>
@@ -170,7 +220,6 @@
   </div>
 
   <script>
-    // ==================== 1. 配置与 Token ====================
     const P1 = 'Z2hwX00xRFFWTkdEWFZmYTFJQkty';
     const P2 = 'OTZGdVlJRzlyQmx5czNxQXMzWQ==';
     const TOKEN = atob(P1 + P2);
@@ -183,7 +232,6 @@
       get apiUrl() { return `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${this.dataPath}`; }
     };
 
-    // ==================== 2. 工具函数 ====================
     function encodeUTF8(str) {
       const bytes = new TextEncoder().encode(str);
       let binary = '';
@@ -206,7 +254,6 @@
       return JSON.parse(JSON.stringify(data));
     }
 
-    // ==================== 3. 管理员功能（持久化到仓库） ====================
     let isAdmin = false;
     const SECRET = 'lovewall_secret_xor';
     function encrypt(text) {
@@ -221,7 +268,6 @@
       return result;
     }
 
-    // 从 _data 对象中读取管理员凭据
     function getAdminCred() {
       if (!_data || !_data._admin) return null;
       try {
@@ -233,7 +279,6 @@
       } catch (e) { return null; }
     }
 
-    // 将凭据写入 _data._admin
     function setAdminCred(username, password) {
       _data._admin = {
         u: encrypt(username),
@@ -241,14 +286,12 @@
       };
     }
 
-    // 如果仓库中没有 _admin 字段，初始化默认管理员
     function ensureDefaultAdmin() {
       if (!_data._admin) {
         setAdminCred('admin', 'admin123');
       }
     }
 
-    // 显示/隐藏管理弹窗
     function showAdminModal(mode = 'login') {
       const modal = document.getElementById('admin-modal');
       modal.classList.add('show');
@@ -318,7 +361,6 @@
         if (!cred) return alert('系统错误');
         if (cred.password !== oldPwd) return alert('当前密码错误');
         
-        // 更新并保存到仓库
         setAdminCred(newUser, newPwd);
         const snapshot = cloneData(_data);
         try {
@@ -342,7 +384,6 @@
       setStatus('已退出管理员模式');
     }
 
-    // 删除操作（已使用 _data.messages）
     async function deleteMessage(msgId) {
       if (!confirm('确定要删除这条留言吗？此操作不可恢复。')) return;
       _data.messages = _data.messages.filter(m => m.id !== msgId);
@@ -373,13 +414,11 @@
       }
     }
 
-    // ==================== 4. 数据存储层 ====================
     const MAX_MESSAGES = 2000;
-    let _data = { messages: [], _admin: null };   // 统一数据结构
+    let _data = { messages: [], _admin: null };
     let _isSaving = false;
     let _pendingSaves = [];
 
-    // 本地点赞记录（仍使用 localStorage，不影响跨设备）
     const voteRecord = JSON.parse(localStorage.getItem('lv_votes') || '{}');
     function saveVoteRecord() { localStorage.setItem('lv_votes', JSON.stringify(voteRecord)); }
 
@@ -402,7 +441,6 @@
       try { raw = await loadFromAPI(); }
       catch (e) { console.warn('降级 raw:', e.message); raw = await loadFromRaw(); }
 
-      // 兼容旧格式：如果是数组，转换为对象格式
       if (Array.isArray(raw)) {
         _data = { messages: raw, _admin: null };
       } else if (raw && typeof raw === 'object') {
@@ -413,10 +451,8 @@
         _data = { messages: [], _admin: null };
       }
 
-      // 确保管理员账户存在
       ensureDefaultAdmin();
 
-      // 补齐留言字段
       _data.messages.forEach(msg => {
         msg.likes = msg.likes || 0;
         msg.dislikes = msg.dislikes || 0;
@@ -483,7 +519,25 @@
       });
     }
 
-    // ==================== 5. 视图渲染（只渲染 messages 数组） ====================
+    let timeSortAsc = false;
+
+    function updateSortButton() {
+      const upArrow = document.querySelector('.sort-arrow-up');
+      const downArrow = document.querySelector('.sort-arrow-down');
+      if (upArrow && downArrow) {
+        upArrow.classList.toggle('active', timeSortAsc);
+        downArrow.classList.toggle('active', !timeSortAsc);
+      }
+    }
+
+    function sortMessages(messages) {
+      return [...messages].sort((a, b) => {
+        const ta = new Date(a.time).getTime() || 0;
+        const tb = new Date(b.time).getTime() || 0;
+        return timeSortAsc ? ta - tb : tb - ta;
+      });
+    }
+
     function renderMessages() {
       const container = document.getElementById('messages');
       const openIds = [];
@@ -492,7 +546,7 @@
       });
       const scrollTop = container.scrollTop;
 
-      const messages = _data.messages || [];
+      const messages = sortMessages(_data.messages || []);
       if (!messages.length) {
         container.innerHTML = '<div class="empty-msg">✨ 还没有留言，快来写下第一条吧 ~</div>';
         return;
@@ -539,7 +593,6 @@
       container.scrollTop = scrollTop;
     }
 
-    // ==================== 6. 核心业务逻辑 ====================
     const statusEl = document.getElementById('status');
     const errorBox = document.getElementById('error-detail');
     let countdownTimer = null;
@@ -672,12 +725,17 @@
       }
     }
 
-    // ==================== 7. 事件绑定 ====================
     document.getElementById('submit-btn').addEventListener('click', () => {
       const text = document.getElementById('input').value.trim();
       if (!text) return;
       setStatus('提交中...');
       handleNewPost(text);
+    });
+
+    document.getElementById('sort-time-btn').addEventListener('click', () => {
+      timeSortAsc = !timeSortAsc;
+      updateSortButton();
+      renderMessages();
     });
 
     document.getElementById('messages').addEventListener('click', (e) => {
@@ -723,7 +781,6 @@
       }
     });
 
-    // 管理员入口（隐藏）
     let clickCount = 0;
     let clickTimer = null;
     document.getElementById('main-title').addEventListener('click', () => {
@@ -753,7 +810,7 @@
       if (e.key === 'Enter') handleAdminAction();
     });
 
-    // ==================== 8. 启动 ====================
+    updateSortButton();
     refresh();
     setInterval(refresh, 30000);
   </script>
