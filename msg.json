@@ -94,7 +94,13 @@
       "time": "2026-08-14T04:50:47.980Z",
       "likes": 1,
       "dislikes": 0,
-      "replies": []
+      "replies": [
+        {
+          "id": "mssgynx4e3fgah",
+          "text": "郎浩宇我男神",
+          "time": "2026-08-14T04:50:59.608Z"
+        }
+      ]
     }
   ],
   "_admin": {
