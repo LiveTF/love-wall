@@ -141,7 +141,13 @@
       "time": "2026-10-05T16:13:25.481Z",
       "likes": 2,
       "dislikes": 0,
-      "replies": []
+      "replies": [
+        {
+          "id": "mv6sz7ggzz2jcz",
+          "text": "为什么为什么为什么",
+          "time": "2026-10-13T14:55:31.456Z"
+        }
+      ]
     }
   ],
   "_admin": {
