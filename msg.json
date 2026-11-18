@@ -171,7 +171,13 @@
       "time": "2026-11-18T14:40:19.644Z",
       "likes": 1,
       "dislikes": 0,
-      "replies": []
+      "replies": [
+        {
+          "id": "mwm8agj8f2wk75",
+          "text": "猎奇死了",
+          "time": "2026-11-18T14:40:25.652Z"
+        }
+      ]
     }
   ],
   "_admin": {
